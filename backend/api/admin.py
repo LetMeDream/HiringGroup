@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import User, EmpresaProfile, CandidatoProfile, ExperienciaLaboral, Vacante, Postulacion, Contrato
+from .models import Usuario, EmpresaProfile, CandidatoProfile, ExperienciaLaboral, Vacante, Postulacion, Contrato
 
 # Register your models here.
-admin.site.register(User)
+admin.site.register(Usuario)
 admin.site.register(EmpresaProfile)
 admin.site.register(CandidatoProfile)
 admin.site.register(ExperienciaLaboral)

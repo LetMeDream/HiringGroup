@@ -79,12 +79,14 @@ WSGI_APPLICATION = 'hiring_group_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'hiring_group_db',
+        'USER': 'postgres',
+        'PASSWORD': 'lunasol12',
+        'HOST': 'localhost',
+        'PORT': '5432', 
     }
 }
-
-AUTH_USER_MODEL = 'api.User' # Acá le recordamos a Django que utilice nuestro custom User.
 
 
 # Password validation
