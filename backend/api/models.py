@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
+
 # Create your models here.
 
 class Usuario(models.Model):
@@ -12,9 +14,17 @@ class Usuario(models.Model):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=50, choices=Role.choices, default=Role.POSTULANTE)
     nombre = models.CharField(max_length=150)
+    password = models.CharField(max_length=128) # Campo añadido
 
     def __str__(self):
         return f"{self.nombre} ({self.role})"
+
+    # Métodos añadidos para manejar la contraseña de forma segura
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
 
 class EmpresaProfile(models.Model):
     user = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='empresa_profile')
