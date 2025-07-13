@@ -36,7 +36,7 @@ class UsuarioListCreateView(APIView):
         Maneja la petición POST para crear un nuevo usuario.
         Utiliza el serializer de registro.
         """
-        serializer = UsuarioRegisterSerializer(data=request.data)
+        serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             # Devolvemos los datos del usuario recién creado usando el serializer estándar
@@ -53,7 +53,6 @@ class UsuarioDetailView(APIView):
     - PUT /api/usuarios/<id>/: Actualiza un usuario.
     - DELETE /api/usuarios/<id>/: Elimina un usuario.
     """
-    permission_classes = [IsAuthenticated] # Proteger estas acciones
 
     def get_object(self, pk):
         """

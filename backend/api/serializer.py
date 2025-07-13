@@ -51,29 +51,9 @@ class EmpresaProfileSerializer(serializers.ModelSerializer):
 # ===================================================================
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer principal para el modelo Usuario.
-    Muestra el perfil correspondiente (empresa o candidato) según el rol del usuario.
-    """
-    # Usamos SerializerMethodField para mostrar el perfil correcto dinámicamente.
-    profile = serializers.SerializerMethodField()
-
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'email', 'role', 'profile']
-
-    def get_profile(self, obj):
-        """
-        Devuelve el serializer del perfil apropiado según el rol del usuario.
-        """
-        if obj.role == Usuario.Role.EMPRESA and hasattr(obj, 'empresa_profile'):
-            return EmpresaProfileSerializer(obj.empresa_profile).data
-        if obj.role == Usuario.Role.POSTULANTE and hasattr(obj, 'candidato_profile'):
-            return CandidatoProfileSerializer(obj.candidato_profile).data
-        if obj.role == Usuario.Role.CONTRATADO and hasattr(obj, 'candidato_profile'):
-            # Un contratado sigue teniendo un perfil de candidato con su info
-            return CandidatoProfileSerializer(obj.candidato_profile).data
-        return None
+        fields = ['id', 'nombre', 'email', 'role']
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -136,7 +116,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         }
 
         # Creamos el usuario. Usamos create_user para hashear el password.
-        user = User.objects.create_user(
+        user = Usuario.objects.create_user(
             username=validated_data['email'], # Usamos email como username
             **validated_data
         )
@@ -144,9 +124,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         # Creamos el perfil correspondiente
-        if role == User.Role.EMPRESA:
+        if role == Usuario.Role.EMPRESA:
             EmpresaProfile.objects.create(user=user, **empresa_data)
-        elif role == User.Role.POSTULANTE:
+        elif role == Usuario.Role.POSTULANTE:
             CandidatoProfile.objects.create(user=user, **candidato_data)
 
         return user
