@@ -33,6 +33,9 @@ class EmpresaProfile(models.Model):
     persona_contacto = models.CharField(max_length=255)
     # ... otros datos de la empresa
 
+    def __str__(self):
+        return f"{self.nombre_empresa} ({self.sector})"
+
 class CandidatoProfile(models.Model):
     user = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='candidato_profile')
     profesion = models.CharField(max_length=255)

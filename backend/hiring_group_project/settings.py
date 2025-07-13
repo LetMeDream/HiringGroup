@@ -80,9 +80,9 @@ WSGI_APPLICATION = 'hiring_group_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'hiring_group_db_2',
+        'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD': 'lunasol12',
+        'PASSWORD': 'ironstone',
         'HOST': 'localhost',
         'PORT': '5432', 
     }
