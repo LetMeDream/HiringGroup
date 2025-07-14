@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { User, UserRole } from '@/types/user';
+import axios from '../../node_modules/axios'
+import { endpoints } from '@/constants/endpoints';
 
 interface AuthContextType {
   user: User | null;
@@ -56,13 +58,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (email: string, username: string, password: string): Promise<boolean> => {
     // Mock registration - replace with real API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // await new Promise(resolve => setTimeout(resolve, 1000));
+    const fullURL = endpoints.base + endpoints.registerUser
+    const res = await axios.post(fullURL, {
+      nombre: username,
+      email,
+      password
+    })
     
     const newUser: User = {
-      id: Date.now().toString(),
-      email,
-      username,
-      role: UserRole.CANDIDATE, // Default role for new registrations
+      id: res.data.id,
+      email: res.data.email,
+      username: res.data.nombre,
+      role: UserRole.CANDIDATE, // Asignar rol por defecto
       isActive: true,
       createdAt: new Date()
     };
