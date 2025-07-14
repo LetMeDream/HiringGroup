@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, LogOut, User } from 'lucide-react';
 import { UserRole } from '@/types/user';
+import { useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
@@ -48,6 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleLogout = () => {
     logout();
+    navigate('/login')
   };
 
   return (
@@ -73,7 +76,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <div className="flex items-center space-x-2">
                     <User className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-foreground">
-                      {user.firstName} {user.lastName}
+                      {user.email} | {user.username}
                     </span>
                     <Badge className={getRoleBadgeColor(user.role)}>
                       {getRoleDisplayName(user.role)}
