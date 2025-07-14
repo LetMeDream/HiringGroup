@@ -48,11 +48,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     Maneja la creación del usuario y su perfil asociado (candidato o empresa).
     """
     # Hacemos el campo 'role' escribible para poder asignarlo en el registro.
-    role = serializers.ChoiceField(choices=Usuario.Role.choices)
+    # role = serializers.ChoiceField(choices=Usuario.Role.choices)
     class Meta:
         model = Usuario
         fields = [
-            'id', 'email', 'password', 'role', 'nombre', 'apellido'
+            'id', 'email', 'password', 'nombre', 'apellido'
         ]
         extra_kwargs = {
             'password': {'write_only': True} # El password no debe ser legible
@@ -64,7 +64,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         Sobrescribimos el método create para manejar la creación del usuario
         y su perfil en una sola transacción.
         """
-        role = validated_data.pop('role')
+        # role = validated_data.pop('role')
 
         # Creamos el usuario. Usamos create_user para hashear el password.
         user = Usuario(
@@ -72,7 +72,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             nombre=validated_data.get('nombre', ''),
             apellido=validated_data.get('apellido', ''),
             telefono=validated_data.get('telefono', ''),
-            role=role
         )
         user.set_password(validated_data['password'])  # Hashear
         user.save()
