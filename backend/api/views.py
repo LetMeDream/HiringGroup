@@ -38,10 +38,8 @@ class UsuarioListCreateView(APIView):
         """
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            # Devolvemos los datos del usuario recién creado usando el serializer estándar
-            # para no exponer datos sensibles como el hash de la contraseña.
-            response_data = UserSerializer(user).data
+            user = serializer.save()  # ← sin 'commit=False'
+            response_data = UserRegisterSerializer(user).data
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

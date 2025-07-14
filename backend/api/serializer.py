@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .models import (
     Usuario, 
     CandidatoProfile, 
-    ExperienciaLaboral, 
+    ExperienciaLaboral 
 )
 
 # ===================================================================
@@ -39,7 +39,7 @@ class CandidatoProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'email', 'role']
+        fields = ['id', 'nombre', 'email', 'role', 'apellido']
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -49,39 +49,15 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     """
     # Hacemos el campo 'role' escribible para poder asignarlo en el registro.
     role = serializers.ChoiceField(choices=Usuario.Role.choices)
-    
-    # Campos adicionales para los perfiles
-    nombre_empresa = serializers.CharField(write_only=True, required=False)
-    sector = serializers.CharField(write_only=True, required=False)
-    persona_contacto = serializers.CharField(write_only=True, required=False)
-    
-    profesion = serializers.CharField(write_only=True, required=False)
-    universidad = serializers.CharField(write_only=True, required=False)
-
-
     class Meta:
         model = Usuario
         fields = [
-            'id', 'email', 'password', 'role', 'nombre_empresa', 
-            'sector', 'persona_contacto', 'profesion', 'universidad'
+            'id', 'email', 'password', 'role', 'nombre', 'apellido'
         ]
         extra_kwargs = {
             'password': {'write_only': True} # El password no debe ser legible
         }
 
-    def validate(self, data):
-        """
-        Validación personalizada para asegurar que se envíen los datos
-        del perfil correspondientes al rol seleccionado.
-        """
-        role = data.get('role')
-        if role == Usuario.Role.EMPRESA:
-            if not all([data.get('nombre_empresa'), data.get('sector'), data.get('persona_contacto')]):
-                raise serializers.ValidationError("Para rol Empresa, se requiere nombre_empresa, sector y persona_contacto.")
-        elif role == Usuario.Role.POSTULANTE:
-            if not all([data.get('profesion'), data.get('universidad')]):
-                raise serializers.ValidationError("Para rol Postulante, se requiere profesion y universidad.")
-        return data
 
     def create(self, validated_data):
         """
@@ -89,31 +65,17 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         y su perfil en una sola transacción.
         """
         role = validated_data.pop('role')
-        
-        # Extraemos los datos del perfil del diccionario
-        empresa_data = {
-            'nombre_empresa': validated_data.pop('nombre_empresa', None),
-            'sector': validated_data.pop('sector', None),
-            'persona_contacto': validated_data.pop('persona_contacto', None)
-        }
-        candidato_data = {
-            'profesion': validated_data.pop('profesion', None),
-            'universidad': validated_data.pop('universidad', None)
-        }
 
         # Creamos el usuario. Usamos create_user para hashear el password.
-        user = Usuario.objects.create_user(
-            username=validated_data['email'], # Usamos email como username
-            **validated_data
+        user = Usuario(
+            email=validated_data['email'],
+            nombre=validated_data.get('nombre', ''),
+            apellido=validated_data.get('apellido', ''),
+            telefono=validated_data.get('telefono', ''),
+            role=role
         )
-        user.role = role
+        user.set_password(validated_data['password'])  # Hashear
         user.save()
-
-        # Creamos el perfil correspondiente
-        if role == Usuario.Role.EMPRESA:
-            EmpresaProfile.objects.create(user=user, **empresa_data)
-        elif role == Usuario.Role.POSTULANTE:
-            CandidatoProfile.objects.create(user=user, **candidato_data)
 
         return user
 
