@@ -17,8 +17,8 @@ export const registerSchema = z.object({
     .max(20, 'El nombre de usuario no puede tener más de 20 caracteres')
     .regex(/^[a-zA-Z0-9_]+$/, 'El nombre de usuario solo puede contener letras, números y guiones bajos'),
   password: z.string()
-    .min(6, 'La contraseña debe tener al menos 6 caracteres')
-    .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'),
+    .min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    //.regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
