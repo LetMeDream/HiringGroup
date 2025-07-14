@@ -38,6 +38,12 @@ class Empresa(models.Model):
     def __str__(self):
         return self.nombre
 
+class Banco(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
 class CandidatoProfile(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='candidato_profile')
     profesion = models.CharField(max_length=255)
@@ -125,8 +131,3 @@ class ReciboPago(models.Model):
     monto = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_emision = models.DateTimeField(auto_now_add=True)
 
-class Banco(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
-
-    def __str__(self):
-        return self.nombre

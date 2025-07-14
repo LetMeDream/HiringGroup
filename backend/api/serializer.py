@@ -3,12 +3,8 @@
 from rest_framework import serializers
 from .models import (
     Usuario, 
-    EmpresaProfile, 
     CandidatoProfile, 
     ExperienciaLaboral, 
-    Vacante, 
-    Postulacion, 
-    Contrato
 )
 
 # ===================================================================
@@ -35,16 +31,6 @@ class CandidatoProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CandidatoProfile
         fields = ['id', 'profesion', 'universidad', 'experiencias']
-
-
-class EmpresaProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer para el perfil de la empresa.
-    """
-    class Meta:
-        model = EmpresaProfile
-        fields = ['id', 'nombre_empresa', 'sector', 'persona_contacto']
-
 
 # ===================================================================
 # Serializers para Usuarios y Autenticación
@@ -135,50 +121,3 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 # ===================================================================
 # Serializers para el Flujo de Reclutamiento
 # ===================================================================
-
-class VacanteSerializer(serializers.ModelSerializer):
-    """
-    Serializer para el modelo Vacante.
-    Muestra información de la empresa de forma anidada para mayor contexto.
-    """
-    # 'read_only=True' para mostrar la info de la empresa al leer vacantes.
-    empresa = EmpresaProfileSerializer(read_only=True) 
-    # 'write_only=True' para asignar la empresa al crear/actualizar una vacante.
-    empresa_id = serializers.PrimaryKeyRelatedField(
-        queryset=EmpresaProfile.objects.all(), source='empresa', write_only=True
-    )
-
-    class Meta:
-        model = Vacante
-        fields = [
-            'id', 'empresa', 'empresa_id', 'profesion_requerida', 'cargo_vacante',
-            'descripcion_perfil', 'salario_ofrecido', 'activa', 'fecha_creacion'
-        ]
-
-
-class PostulacionSerializer(serializers.ModelSerializer):
-    """
-    Serializer para las postulaciones.
-    Muestra información detallada del candidato y la vacante.
-    """
-    candidato = UserSerializer(read_only=True)
-    vacante = VacanteSerializer(read_only=True)
-
-    class Meta:
-        model = Postulacion
-        fields = ['id', 'candidato', 'vacante', 'fecha_postulacion']
-
-
-class ContratoSerializer(serializers.ModelSerializer):
-    """
-    Serializer para crear y ver contratos.
-    """
-    # Usamos un serializer anidado para mostrar los detalles del contratado.
-    candidato_contratado = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Contrato
-        fields = [
-            'id', 'candidato_contratado', 'vacante_aplicada', 'fecha_contratacion',
-            'duracion', 'salario_mensual', 'banco', 'numero_cuenta'
-        ]
