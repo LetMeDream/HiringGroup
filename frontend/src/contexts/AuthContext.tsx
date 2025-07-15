@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  register: (email: string, username: string, password: string) => Promise<boolean>;
+  register: (email: string, username: string, password: string, lastname: string, telefono: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,14 +56,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const register = async (email: string, username: string, password: string): Promise<boolean> => {
+  const register = async (email: string, username: string, password: string, lastname: string, telefono: string): Promise<boolean> => {
     // Mock registration - replace with real API call
     // await new Promise(resolve => setTimeout(resolve, 1000));
     const fullURL = endpoints.base + endpoints.registerUser
     const res = await axios.post(fullURL, {
       nombre: username,
       email,
-      password
+      password,
+      apellido: lastname,
+      telefono
     })
     
     const newUser: User = {

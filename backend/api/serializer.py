@@ -52,7 +52,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'id', 'email', 'password', 'nombre', 'apellido'
+            'id', 'email', 'password', 'nombre', 'apellido', 'telefono'
         ]
         extra_kwargs = {
             'password': {'write_only': True} # El password no debe ser legible

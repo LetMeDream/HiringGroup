@@ -31,7 +31,7 @@ const RegisterPage: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      const success = await registerUser(data.email, data.username, data.password);
+      const success = await registerUser(data.email, data.username, data.password, data.lastname, data.telefono);
       if (success) {
         toast({
           title: "Registro exitoso",
@@ -122,7 +122,7 @@ const RegisterPage: React.FC = () => {
                 <Label htmlFor="telefono">Telefono</Label>
                 <Input
                   id="telefono"
-                  type="tel"
+                  type="string"
                   placeholder="1234567890"
                   {...register('telefono')}
                   className={errors.telefono ? 'border-destructive' : ''}  
