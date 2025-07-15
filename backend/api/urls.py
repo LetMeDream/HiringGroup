@@ -1,9 +1,11 @@
 # En api/urls.py
 from django.urls import path
-from .views import UsuarioListCreateView, UsuarioDetailView
+from .views import UsuarioListCreateView, UsuarioDetailView, UsuarioLoginView
 
 urlpatterns = [
     path('usuarios/', UsuarioListCreateView.as_view(), name='usuario-list-create'),
     path('usuarios/<int:pk>/', UsuarioDetailView.as_view(), name='usuario-detail'),
     # ... otras rutas para tu API
+    # Path de login
+    path('login/', UsuarioLoginView.as_view(), name='usuario-login'),
 ]

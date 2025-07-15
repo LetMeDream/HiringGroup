@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Usuario
 from .serializer import UserSerializer, UserRegisterSerializer
@@ -90,6 +91,46 @@ class UsuarioDetailView(APIView):
         usuario = self.get_object(pk)
         usuario.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+## Vista para el login de usuarios
+class UsuarioLoginView(APIView):
+    """
+    Vista para manejar el login de usuarios.
+    - POST /api/login/: Inicia sesión con las credenciales del usuario.
+    """
+
+    permission_classes = [AllowAny]  # Permite acceso a cualquier usuario
+
+    def post(self, request, format=None):
+        """
+        Maneja la petición POST para iniciar sesión.
+        Aquí deberías implementar la lógica de autenticación.
+        """
+        # Implementa la lógica de autenticación aquí
+        email = request.data.get('email')
+        password = request.data.get('password')
+        if not email or not password:
+            return Response({"error": "Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            usuario = Usuario.objects.get(email=email)
+        except Usuario.DoesNotExist:
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not usuario.check_password(password):
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        # Genera tokens
+        refresh = RefreshToken.for_user(usuario)
+        return Response({
+            "message": "Login successful",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": {
+                "id": usuario.id,
+                "username": usuario.nombre,
+                "email": usuario.email,
+            }
+        }, status=status.HTTP_200_OK)
 
 
 # Aquí irían los otros ViewSets o Vistas para Vacante, Postulacion, etc.
