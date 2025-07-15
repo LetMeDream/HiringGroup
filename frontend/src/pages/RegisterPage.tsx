@@ -31,7 +31,7 @@ const RegisterPage: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      const success = await registerUser(data.email, data.username, data.password, data.lastname, data.telefono);
+      const success = await registerUser(data.email, data.username, data.password, data.lastname, data.telefono, data.userType);
       if (success) {
         toast({
           title: "Registro exitoso",
@@ -130,6 +130,24 @@ const RegisterPage: React.FC = () => {
                   {errors.telefono && (
                     <p className="text-sm text-destructive">{errors.telefono.message}</p>
                   )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="userType">Tipo de usuario</Label>
+                <select
+                  id="userType"
+                  {...register('userType')}
+                  className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${errors.userType ? 'border-destructive' : ''}`}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Selecciona un tipo de usuario</option>
+                  <option value="hiring">Hiring</option>
+                  <option value="empresa">Empresa</option>
+                  <option value="candidato">Candidato</option>
+                </select>
+                {errors.userType && (
+                  <p className="text-sm text-destructive">{errors.userType.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">

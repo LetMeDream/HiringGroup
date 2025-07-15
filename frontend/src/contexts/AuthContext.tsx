@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  register: (email: string, username: string, password: string, lastname: string, telefono: string) => Promise<boolean>;
+  register: (email: string, username: string, password: string, lastname: string, telefono: string, role: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,8 +66,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const register = async (email: string, username: string, password: string, lastname: string, telefono: string): Promise<boolean> => {
-    // Mock registration - replace with real API call
+  const register = async (email: string, username: string, password: string, lastname: string, telefono: string, role: string): Promise<boolean> => {
+    // Mapear el valor del select a los valores esperados por el backend
+    let backendRole = 'POSTULANTE';
+    if (role === 'hiring') backendRole = 'HIRING_GROUP';
+    else if (role === 'empresa') backendRole = 'EMPRESA';
+    else if (role === 'candidato') backendRole = 'POSTULANTE';
     // await new Promise(resolve => setTimeout(resolve, 1000));
     const fullURL = endpoints.base + endpoints.registerUser
     const res = await axios.post(fullURL, {
@@ -75,14 +79,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       email,
       password,
       apellido: lastname,
-      telefono
+      telefono,
+      role: backendRole
     })
     
     const newUser: User = {
       id: res.data.id,
       email: res.data.email,
       username: res.data.nombre,
-      role: UserRole.CANDIDATE, // Asignar rol por defecto
+      role: backendRole === 'HIRING_GROUP' ? UserRole.HIRING_GROUP :
+            backendRole === 'EMPRESA' ? UserRole.COMPANY :
+            backendRole === 'ADMIN' ? UserRole.ADMIN :
+            backendRole === 'CONTRATADO' ? UserRole.EMPLOYEE :
+            UserRole.CANDIDATE,
       isActive: true,
       createdAt: new Date()
     };
