@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isActive: true,
         createdAt: new Date()
       };
-      debugger
+
       setUser(finalUser);
       return true;
     } else {
