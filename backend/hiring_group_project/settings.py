@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'hiring_group_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
+        'NAME': 'postgre_01',
         'USER': 'postgres',
         'PASSWORD': 'ironstone',
         'HOST': 'localhost',
@@ -132,3 +132,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOW_ALL_ORIGINS = True

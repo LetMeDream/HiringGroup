@@ -95,13 +95,41 @@ const RegisterPage: React.FC = () => {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="nombreusuario"
+                  placeholder="nombre usuario"
                   {...register('username')}
                   className={errors.username ? 'border-destructive' : ''}
                 />
                 {errors.username && (
                   <p className="text-sm text-destructive">{errors.username.message}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastname">Apellido de usuario</Label>
+                <Input
+                  id="lastname"
+                  type="text"
+                  placeholder="apellido"
+                  {...register('lastname')}
+                  className={errors.lastname ? 'border-destructive' : ''}
+                  />
+                  {errors.lastname && (
+                    <p className="text-sm text-destructive">{errors.lastname.message}</p>
+                  )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telefono">Telefono</Label>
+                <Input
+                  id="telefono"
+                  type="tel"
+                  placeholder="1234567890"
+                  {...register('telefono')}
+                  className={errors.telefono ? 'border-destructive' : ''}  
+                  />
+                  {errors.telefono && (
+                    <p className="text-sm text-destructive">{errors.telefono.message}</p>
+                  )}
               </div>
 
               <div className="space-y-2">
