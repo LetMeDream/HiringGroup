@@ -30,26 +30,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Mock authentication - replace with real API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock user data based on email
-    const mockUser: User = {
-      id: '1',
+    const loginUrl = endpoints.base + endpoints.login
+    const res = await axios.post(loginUrl, {
       email,
-      username: email.split('@')[0],
-      role: email.includes('admin') ? UserRole.ADMIN : 
-            email.includes('hiring') ? UserRole.HIRING_GROUP :
-            email.includes('company') ? UserRole.COMPANY :
-            email.includes('employee') ? UserRole.EMPLOYEE :
-            UserRole.CANDIDATE,
-      firstName: 'Usuario',
-      lastName: 'Demo',
-      isActive: true,
-      createdAt: new Date()
-    };
+      password
+    })
+    const user = res.data.user
+
+    if (res.status === 200 && user) {
+      // Mock user data based on email
+      const finalUser: User = {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: email.includes('admin') ? UserRole.ADMIN : 
+              email.includes('hiring') ? UserRole.HIRING_GROUP :
+              email.includes('company') ? UserRole.COMPANY :
+              email.includes('employee') ? UserRole.EMPLOYEE :
+              UserRole.CANDIDATE,
+        firstName: 'Usuario',
+        lastName: 'Demo',
+        isActive: true,
+        createdAt: new Date()
+      };
+      debugger
+      setUser(finalUser);
+      return true;
+    } else {
+      return false
+    }
     
-    setUser(mockUser);
-    return true;
   };
 
   const logout = () => {

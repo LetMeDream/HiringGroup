@@ -129,6 +129,9 @@ class UsuarioLoginView(APIView):
                 "id": usuario.id,
                 "username": usuario.nombre,
                 "email": usuario.email,
+                "role": usuario.role,
+                "apellido": usuario.apellido,
+                "telefono": usuario.telefono
             }
         }, status=status.HTTP_200_OK)
 
