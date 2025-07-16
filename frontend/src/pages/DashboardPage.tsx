@@ -22,7 +22,7 @@ const DashboardPage: React.FC = () => {
         return <HiringGroupDashboard />;
       case UserRole.COMPANY:
         return <CompanyDashboard />;
-      case UserRole.CANDIDATE:
+      case UserRole.POSTULANTE:
         return <CandidateDashboard />;
       case UserRole.EMPLOYEE:
         return <EmployeeDashboard />;

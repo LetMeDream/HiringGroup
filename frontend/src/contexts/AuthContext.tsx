@@ -38,6 +38,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   } */);
   const [empresa, setEmpresa] = useState<string>('');
 
+  const mapBackendRoleToFrontend = (role: string): UserRole => {
+    switch (role) {
+      case 'ADMIN':
+        return UserRole.ADMIN;
+      case 'HIRING_GROUP':
+        return UserRole.HIRING_GROUP;
+      case 'EMPRESA':
+        return UserRole.COMPANY;
+      case 'POSTULANTE':
+        return UserRole.POSTULANTE;
+      case 'CONTRATADO':
+        return UserRole.EMPLOYEE;
+      default:
+        return UserRole.POSTULANTE;
+    }
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     // Mock authentication - replace with real API call
     const loginUrl = endpoints.base + endpoints.login
@@ -53,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role ? user.role : UserRole.CANDIDATE,
+        role: mapBackendRoleToFrontend(user.role), // ← usa la función de mapeo aquí
         firstName: 'Usuario',
         lastName: 'Demo',
         isActive: true,
@@ -101,7 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             backendRole === 'EMPRESA' ? UserRole.COMPANY :
             backendRole === 'ADMIN' ? UserRole.ADMIN :
             backendRole === 'CONTRATADO' ? UserRole.EMPLOYEE :
-            UserRole.CANDIDATE,
+            UserRole.POSTULANTE,
       isActive: true,
       createdAt: new Date()
     };

@@ -2,7 +2,7 @@ export enum UserRole {
   ADMIN = 'admin',
   HIRING_GROUP = 'hiring_group',
   COMPANY = 'empresa',
-  CANDIDATE = 'candidato',
+  POSTULANTE = 'postulante',
   EMPLOYEE = 'contratado'
 }
 
@@ -18,8 +18,8 @@ export interface User {
   createdAt: Date;
 }
 
-export interface Candidate extends User {
-  role: UserRole.CANDIDATE;
+export interface POSTULANTE extends User {
+  role: UserRole.POSTULANTE;
   profession?: string;
   university?: string;
   experiences: WorkExperience[];

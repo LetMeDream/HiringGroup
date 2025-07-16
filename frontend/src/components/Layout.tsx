@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         return 'bg-primary text-primary-foreground';
       case UserRole.COMPANY:
         return 'bg-warning text-warning-foreground';
-      case UserRole.CANDIDATE:
+      case UserRole.POSTULANTE:
         return 'bg-success text-success-foreground';
       case UserRole.EMPLOYEE:
         return 'bg-secondary text-secondary-foreground';
@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         return 'Hiring Group';
       case UserRole.COMPANY:
         return 'Empresa';
-      case UserRole.CANDIDATE:
+      case UserRole.POSTULANTE:
         return 'Candidato';
       case UserRole.EMPLOYEE:
         return 'Empleado';
