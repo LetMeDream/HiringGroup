@@ -255,11 +255,11 @@ const CompanyDashboard: React.FC = () => {
     <Layout>
       <CreateOfferModal open={showCreateModal} onOpenChange={setShowCreateModal} />
       <div className="space-y-6">
-        <div className="flex justify-end">
+        {/* <div className="flex justify-end">
           <Button variant="outline" onClick={fetchOffers}>
             Refrescar Ofertas
           </Button>
-        </div>
+        </div> */}
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
