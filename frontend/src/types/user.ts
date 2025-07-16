@@ -1,9 +1,9 @@
 export enum UserRole {
   ADMIN = 'admin',
   HIRING_GROUP = 'hiring_group',
-  COMPANY = 'company',
-  CANDIDATE = 'candidate',
-  EMPLOYEE = 'employee'
+  COMPANY = 'empresa',
+  CANDIDATE = 'candidato',
+  EMPLOYEE = 'contratado'
 }
 
 export interface User {

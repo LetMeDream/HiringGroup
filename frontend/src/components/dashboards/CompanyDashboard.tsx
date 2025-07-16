@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,8 +13,31 @@ import {
   XCircle
 } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { useAuth } from '@/contexts/AuthContext';
+import EmpresaOnboardingForm from './EmpresaOnboardingForm';
+import axios from 'axios';
+import { endpoints } from '@/constants/endpoints';
 
 const CompanyDashboard: React.FC = () => {
+  const { empresa, user, setEmpresa } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(!empresa);
+  const [loading, setLoading] = useState(false);
+
+  // Simulación de guardado, reemplazar con llamada real a API
+  const handleEmpresaSubmit = async (data: { sector: string; nombre: string; direccion: string }) => {
+    setLoading(true);
+    // Aquí deberías hacer la petición a tu backend para crear la empresa
+    const fullUrl = endpoints.base + endpoints.completarEmpresa(user.id);
+    const res = await axios.patch(fullUrl, data);
+    if (res.status === 200 && res.data) {
+      setTimeout(() => {
+        // Idealmente, deberías actualizar el contexto de empresa aquí
+        setLoading(false);
+        setShowOnboarding(false);
+        setEmpresa(res.data.nombre);
+      }, 500);
+    }
+  };
   const stats = [
     {
       title: 'Ofertas Activas',
@@ -76,6 +99,10 @@ const CompanyDashboard: React.FC = () => {
       published: '5 días'
     }
   ];
+
+  if (showOnboarding) {
+    return <EmpresaOnboardingForm onSubmit={handleEmpresaSubmit} loading={loading} />;
+  }
 
   return (
     <Layout>

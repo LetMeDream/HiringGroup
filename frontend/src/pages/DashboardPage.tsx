@@ -15,7 +15,7 @@ const DashboardPage: React.FC = () => {
   }
 
   const renderDashboard = () => {
-    switch (user.role) {
+    switch (user.role.toLowerCase()) {
       case UserRole.ADMIN:
         return <AdminDashboard />;
       case UserRole.HIRING_GROUP:

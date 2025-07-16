@@ -9,6 +9,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (email: string, username: string, password: string, lastname: string, telefono: string, role: string) => Promise<boolean>;
+  empresa: string;
+  setEmpresa: (empresa: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,7 +28,15 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null >(/* {
+    id: '30',
+    email: '',
+    username: '',
+    role: UserRole.COMPANY,
+    isActive: false,
+    createdAt: new Date()
+  } */);
+  const [empresa, setEmpresa] = useState<string>('');
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Mock authentication - replace with real API call
@@ -43,16 +53,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: email.includes('admin') ? UserRole.ADMIN : 
-              email.includes('hiring') ? UserRole.HIRING_GROUP :
-              email.includes('company') ? UserRole.COMPANY :
-              email.includes('employee') ? UserRole.EMPLOYEE :
-              UserRole.CANDIDATE,
+        role: user.role ? user.role : UserRole.CANDIDATE,
         firstName: 'Usuario',
         lastName: 'Demo',
         isActive: true,
         createdAt: new Date()
       };
+
+      if (user?.empresa?.length > 0) {
+        setEmpresa(user.empresa)
+      }
 
       setUser(finalUser);
       return true;
@@ -105,7 +115,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     login,
     logout,
-    register
+    register,
+    empresa,
+    setEmpresa
   };
 
   return (

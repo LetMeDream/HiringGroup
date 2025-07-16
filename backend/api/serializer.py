@@ -4,7 +4,8 @@ from rest_framework import serializers
 from .models import (
     Usuario, 
     CandidatoProfile, 
-    ExperienciaLaboral 
+    ExperienciaLaboral,
+    Empresa
 )
 
 # ===================================================================
@@ -80,6 +81,18 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+# ===================================================================
+# Serializers para el flujo de creación de empresas
+# ===================================================================
+class EmpresaSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo Empresa.
+    Incluye los campos necesarios para crear o actualizar una empresa.
+    """
+    class Meta:
+        model = Empresa
+        fields = ['id', 'usuario', 'nombre', 'sector', 'persona_contacto', 'telefono_contacto', 'direccion']
+        read_only_fields = ['usuario']  # El usuario se asigna automáticamente
 
 # ===================================================================
 # Serializers para el Flujo de Reclutamiento
