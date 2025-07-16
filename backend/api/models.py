@@ -1,9 +1,17 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 # Create your models here.
 
 class Usuario(models.Model):
+    # Definición de las opciones de rol como constantes
+    ROL_POSTULANTE = 'POSTULANTE'
+    ROL_EMPRESA = 'EMPRESA'
+    ROL_ADMIN = 'ADMIN'
+    ROL_HIRING_GROUP = 'HIRING_GROUP'
+    ROL_CONTRATADO = 'CONTRATADO'
     class Role(models.TextChoices):
         ADMIN = "ADMIN", "Administrador"
         HIRING_GROUP = "HIRING_GROUP", "Hiring Group"
@@ -36,7 +44,16 @@ class Empresa(models.Model):
     direccion = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return self.nombre
+        str = self.nombre
+        if (str):
+          return 'Empresa: %s' % (self.nombre)
+        return 'Empresa de: %s' % (self.usuario.nombre)
+
+# Signal post_save; Acciones para luego de registrado el Usuario
+@receiver(post_save, sender=Usuario)
+def crear_empresa_usuario(sender, instance, created, **kwargs):
+	if (created and instance.role == Usuario.ROL_EMPRESA):
+		Empresa.objects.create(usuario=instance)
 
 class Banco(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
