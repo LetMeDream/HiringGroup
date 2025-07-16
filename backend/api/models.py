@@ -49,11 +49,34 @@ class Empresa(models.Model):
           return 'Empresa: %s' % (self.nombre)
         return 'Empresa de: %s' % (self.usuario.nombre)
 
+    def save(self, *args, **kwargs):
+        self.persona_contacto = self.usuario.nombre
+        self.telefono_contacto = self.usuario.telefono
+        super().save(*args, **kwargs)  
+
 # Signal post_save; Acciones para luego de registrado el Usuario
 @receiver(post_save, sender=Usuario)
 def crear_empresa_usuario(sender, instance, created, **kwargs):
 	if (created and instance.role == Usuario.ROL_EMPRESA):
-		Empresa.objects.create(usuario=instance)
+			Empresa.objects.create(usuario=instance)
+
+# Nuevo signal: sincroniza persona_contacto y telefono_contacto cuando Usuario cambia
+@receiver(post_save, sender=Usuario)
+def sync_empresa_contact_fields(sender, instance, created, **kwargs):
+	if not created and instance.role == Usuario.ROL_EMPRESA:
+			try:
+					empresa = instance.empresa
+					updated = False
+					if empresa.persona_contacto != instance.nombre:
+							empresa.persona_contacto = instance.nombre
+							updated = True
+					if empresa.telefono_contacto != instance.telefono:
+							empresa.telefono_contacto = instance.telefono
+							updated = True
+					if updated:
+							empresa.save()
+			except Empresa.DoesNotExist:
+					pass
 
 class Banco(models.Model):
     nombre = models.CharField(max_length=100, unique=True)

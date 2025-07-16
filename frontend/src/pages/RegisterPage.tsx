@@ -75,7 +75,7 @@ const RegisterPage: React.FC = () => {
           </CardHeader>
           
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete='off'>
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
                 <Input
