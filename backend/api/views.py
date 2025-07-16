@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Usuario, Empresa
-from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer
+from .models import Usuario, Empresa, Oferta
+from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer
 
 # ===================================================================
 # Vistas Individuales para el modelo Usuario
@@ -193,6 +193,47 @@ def actualizar_datos_empresa(request, usuario_id):
         return Response(EmpresaSerializer(empresa).data, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'No se enviaron campos válidos para actualizar.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ===================================================================
+# Vistas para el modelo Oferta
+# ===================================================================
+
+class OfertaListCreateView(APIView):
+    permission_classes = [AllowAny]
+    """
+    Vista para listar todas las ofertas y crear una nueva oferta.
+    - GET /api/ofertas/: Lista todas las ofertas.
+    - POST /api/ofertas/: Crea una nueva oferta.
+    """
+    def get(self, request):
+        empresa = getattr(request.user, 'empresa', None)
+        if not empresa:
+            return Response({'error': 'No tienes empresa asociada.'}, status=status.HTTP_400_BAD_REQUEST)
+        ofertas = Oferta.objects.filter(empresa=empresa)
+        serializer = OfertaSerializer(ofertas, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        # Si hay usuario autenticado y tiene empresa, úsala
+        empresa = getattr(request.user, 'empresa', None)
+        data = request.data.copy()
+        if empresa:
+            data['empresa'] = empresa.id
+        elif 'empresa' in data:
+            # Permitir que el frontend envíe el id de la empresa
+            pass
+        else:
+            return Response({'error': 'No tienes empresa asociada ni se envió empresa.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = OfertaSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 # Aquí irían los otros ViewSets o Vistas para Vacante, Postulacion, etc.
 # from .models import Vacante, Postulacion, ...

@@ -1,6 +1,7 @@
 # En api/urls.py
 from django.urls import path
 from .views import UsuarioListCreateView, UsuarioDetailView, UsuarioLoginView, EmpresaListCreateView, actualizar_datos_empresa
+from .views import OfertaListCreateView
 
 urlpatterns = [
     # Rutas para el modelo Usuario
@@ -12,4 +13,6 @@ urlpatterns = [
     # Empresas
     path('empresas/', EmpresaListCreateView.as_view(), name='empresa-list-create'),
     path('empresas/<int:usuario_id>/actualizar/', actualizar_datos_empresa, name='empresa-actualizar'),
+    # Ofertas
+    path('ofertas/', OfertaListCreateView.as_view(), name='oferta-list-create'),
 ]

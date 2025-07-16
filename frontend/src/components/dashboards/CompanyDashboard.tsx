@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,11 +17,151 @@ import { useAuth } from '@/contexts/AuthContext';
 import EmpresaOnboardingForm from './EmpresaOnboardingForm';
 import axios from 'axios';
 import { endpoints } from '@/constants/endpoints';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+
+// Subcomponente: Modal para crear oferta laboral
+const CreateOfferModal = ({ open, onOpenChange, onOfferCreated }) => {
+  const form = useForm({
+    defaultValues: {
+      profesion: '',
+      cargo: '',
+      descripcion: '',
+      salario: '',
+      activa: true,
+      estado: '',
+    },
+  });
+  const [loading, setLoading] = useState(false);
+  const { empresa } = useAuth(); // Asegúrate de que esto devuelva un objeto con el id
+
+  const onSubmit = async (values) => {
+    setLoading(true);
+    try {
+        const data = { ...values, empresa: empresa.id }; // Asegúrate de que empresa.id exista
+        const res = await axios.post(endpoints.base + 'api/ofertas/', data);
+        setLoading(false);
+        onOfferCreated && onOfferCreated(res.data);
+        onOpenChange(false);
+        form.reset();
+    } catch (e) {
+        setLoading(false);
+        // Manejo de error aquí
+    }
+};
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Crear Nueva Oferta Laboral</DialogTitle>
+          <DialogDescription>Completa los campos para publicar una nueva oferta.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField name="profesion" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Profesión</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ej: Ingeniería de Software" {...field} required />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="cargo" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cargo</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ej: Desarrollador Full Stack" {...field} required />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="descripcion" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Descripción</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Describe la posición y requisitos..." {...field} required />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="salario" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Salario</FormLabel>
+                <FormControl>
+                  <Input type="number" min="0" step="0.01" placeholder="Ej: 45000" {...field} required />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="activa" control={form.control} render={({ field }) => (
+              <FormItem className="flex items-center space-x-2">
+                <FormLabel>Oferta Activa</FormLabel>
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="estado" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Estado</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Abierta">Abierta</SelectItem>
+                      <SelectItem value="Cerrada">Cerrada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <DialogFooter>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Creando...' : 'Crear Oferta'}
+              </Button>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Cancelar</Button>
+              </DialogClose>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const CompanyDashboard: React.FC = () => {
   const { empresa, user, setEmpresa } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(!empresa);
   const [loading, setLoading] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [offers, setOffers] = useState([]);
+  const [offersLoading, setOffersLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      setOffersLoading(true);
+      try {
+        const res = await axios.get(endpoints.base + 'api/ofertas/');
+        setOffers(res.data);
+      } catch (e) {
+        // Manejo de error
+      }
+      setOffersLoading(false);
+    };
+    if (empresa) fetchOffers();
+  }, [empresa]);
 
   // Simulación de guardado, reemplazar con llamada real a API
   const handleEmpresaSubmit = async (data: { sector: string; nombre: string; direccion: string }) => {
@@ -38,6 +178,12 @@ const CompanyDashboard: React.FC = () => {
       }, 500);
     }
   };
+
+  // Simulación de refresco de ofertas
+  const handleOfferCreated = (newOffer) => {
+    setOffers((prev) => [newOffer, ...prev]);
+  };
+
   const stats = [
     {
       title: 'Ofertas Activas',
@@ -106,6 +252,7 @@ const CompanyDashboard: React.FC = () => {
 
   return (
     <Layout>
+      <CreateOfferModal open={showCreateModal} onOpenChange={setShowCreateModal} onOfferCreated={handleOfferCreated} />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -120,7 +267,7 @@ const CompanyDashboard: React.FC = () => {
               <Settings className="w-4 h-4" />
               <span>Configuración</span>
             </Button>
-            <Button className="flex items-center space-x-2 bg-gradient-primary">
+            <Button className="flex items-center space-x-2 bg-gradient-primary" onClick={() => setShowCreateModal(true)}>
               <Plus className="w-4 h-4" />
               <span>Nueva Oferta</span>
             </Button>
@@ -173,7 +320,7 @@ const CompanyDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline" onClick={() => setShowCreateModal(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Crear Nueva Oferta
                 </Button>
@@ -204,7 +351,7 @@ const CompanyDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentOffers.map((offer, index) => (
+                  {offers.map((offer, index) => (
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
@@ -258,5 +405,9 @@ const CompanyDashboard: React.FC = () => {
     </Layout>
   );
 };
+
+
+
+
 
 export default CompanyDashboard;

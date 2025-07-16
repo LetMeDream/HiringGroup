@@ -5,7 +5,8 @@ from .models import (
     Usuario, 
     CandidatoProfile, 
     ExperienciaLaboral,
-    Empresa
+    Empresa,
+    Oferta
 )
 
 # ===================================================================
@@ -95,5 +96,14 @@ class EmpresaSerializer(serializers.ModelSerializer):
         read_only_fields = ['usuario']  # El usuario se asigna automáticamente
 
 # ===================================================================
-# Serializers para el Flujo de Reclutamiento
+# Serializers para el Creacion de Oferta
 # ===================================================================
+
+class OfertaSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo Oferta.
+    Incluye los campos necesarios para crear o actualizar una oferta.
+    """
+    class Meta:
+        model = Oferta
+        fields = '__all__'
