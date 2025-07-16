@@ -26,7 +26,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { useForm } from 'react-hook-form';
 
 // Subcomponente: Modal para crear oferta laboral
-const CreateOfferModal = ({ open, onOpenChange, onOfferCreated }) => {
+const CreateOfferModal = ({ open, onOpenChange }) => {
   const form = useForm({
     defaultValues: {
       profesion: '',
@@ -38,15 +38,14 @@ const CreateOfferModal = ({ open, onOpenChange, onOfferCreated }) => {
     },
   });
   const [loading, setLoading] = useState(false);
-  const { empresa } = useAuth(); // Asegúrate de que esto devuelva un objeto con el id
+  const { empresa, user } = useAuth(); // Asegúrate de que esto devuelva un objeto con el id
 
   const onSubmit = async (values) => {
     setLoading(true);
     try {
-        const data = { ...values, empresa: empresa.id }; // Asegúrate de que empresa.id exista
+        const data = { ...values, usuario: user.id }; // Asegúrate de que empresa.id exista
         const res = await axios.post(endpoints.base + 'api/ofertas/', data);
         setLoading(false);
-        onOfferCreated && onOfferCreated(res.data);
         onOpenChange(false);
         form.reset();
     } catch (e) {
@@ -149,17 +148,19 @@ const CompanyDashboard: React.FC = () => {
   const [offers, setOffers] = useState([]);
   const [offersLoading, setOffersLoading] = useState(true);
 
+  // Definir fetchOffers fuera de useEffect para poder llamarlo desde un botón
+  const fetchOffers = async () => {
+    setOffersLoading(true);
+    try {
+      const res = await axios.get(endpoints.base + `api/ofertas/${user.id}/`);
+      setOffers(res.data);
+    } catch (e) {
+      // Manejo de error
+    }
+    setOffersLoading(false);
+  };
+
   useEffect(() => {
-    const fetchOffers = async () => {
-      setOffersLoading(true);
-      try {
-        const res = await axios.get(endpoints.base + 'api/ofertas/');
-        setOffers(res.data);
-      } catch (e) {
-        // Manejo de error
-      }
-      setOffersLoading(false);
-    };
     if (empresa) fetchOffers();
   }, [empresa]);
 
@@ -252,8 +253,13 @@ const CompanyDashboard: React.FC = () => {
 
   return (
     <Layout>
-      <CreateOfferModal open={showCreateModal} onOpenChange={setShowCreateModal} onOfferCreated={handleOfferCreated} />
+      <CreateOfferModal open={showCreateModal} onOpenChange={setShowCreateModal} />
       <div className="space-y-6">
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={fetchOffers}>
+            Refrescar Ofertas
+          </Button>
+        </div>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

@@ -160,7 +160,6 @@ class EmpresaListCreateView(APIView):
         Maneja la petición POST para crear una nueva empresa.
         """
         serializer = EmpresaSerializer(data=request.data)
-        import pdb; pdb.set_trace()
         if serializer.is_valid():
             empresa = serializer.save()
             return Response(EmpresaSerializer(empresa).data, status=status.HTTP_201_CREATED)
@@ -206,8 +205,8 @@ class OfertaListCreateView(APIView):
     - GET /api/ofertas/: Lista todas las ofertas.
     - POST /api/ofertas/: Crea una nueva oferta.
     """
-    def get(self, request):
-        empresa = getattr(request.user, 'empresa', None)
+    def get(self, request, user_id):
+        empresa = Empresa.objects.filter(usuario_id=user_id).first()
         if not empresa:
             return Response({'error': 'No tienes empresa asociada.'}, status=status.HTTP_400_BAD_REQUEST)
         ofertas = Oferta.objects.filter(empresa=empresa)
@@ -215,22 +214,27 @@ class OfertaListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        # Si hay usuario autenticado y tiene empresa, úsala
-        empresa = getattr(request.user, 'empresa', None)
         data = request.data.copy()
-        if empresa:
-            data['empresa'] = empresa.id
-        elif 'empresa' in data:
-            # Permitir que el frontend envíe el id de la empresa
-            pass
-        else:
-            return Response({'error': 'No tienes empresa asociada ni se envió empresa.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer = OfertaSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        empresa = Empresa.objects.filter(usuario=data['usuario']).first()
+        if not empresa:
+            return Response({'error': 'Empresa no encontrada para el usuario proporcionado.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Crear la oferta manualmente usando el modelo
+        try:
+            oferta = Oferta.objects.create(
+                empresa=empresa,
+                profesion=data['profesion'],
+                cargo=data['cargo'],
+                descripcion=data['descripcion'],
+                salario=data['salario'],
+                activa=data.get('activa', True),
+                estado=data.get('estado', ''),
+            )
+        except Exception as e:
+            return Response({'error': f'Error al crear la oferta: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = OfertaSerializer(oferta)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 

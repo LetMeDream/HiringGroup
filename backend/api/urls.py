@@ -15,4 +15,5 @@ urlpatterns = [
     path('empresas/<int:usuario_id>/actualizar/', actualizar_datos_empresa, name='empresa-actualizar'),
     # Ofertas
     path('ofertas/', OfertaListCreateView.as_view(), name='oferta-list-create'),
+    path('ofertas/<int:user_id>/', OfertaListCreateView.as_view(), name='oferta-detail'),
 ]
