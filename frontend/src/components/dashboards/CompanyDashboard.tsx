@@ -141,9 +141,7 @@ const CreateOfferModal = ({ open, onOpenChange }) => {
 };
 
 const CompanyDashboard: React.FC = () => {
-  const { empresa, user, setEmpresa } = useAuth();
-  const [showOnboarding, setShowOnboarding] = useState(!empresa);
-  const [loading, setLoading] = useState(false);
+  const { empresa, user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [offers, setOffers] = useState([]);
   const [offersLoading, setOffersLoading] = useState(true);
@@ -164,22 +162,7 @@ const CompanyDashboard: React.FC = () => {
     if (empresa) fetchOffers();
   }, [empresa]);
 
-  // Simulación de guardado, reemplazar con llamada real a API
-  const handleEmpresaSubmit = async (data: { sector: string; nombre: string; direccion: string }) => {
-    setLoading(true);
-    // Aquí deberías hacer la petición a tu backend para crear la empresa
-    const fullUrl = endpoints.base + endpoints.completarEmpresa(user.id);
-    const res = await axios.patch(fullUrl, data);
-    if (res.status === 200 && res.data) {
-      setTimeout(() => {
-        // Idealmente, deberías actualizar el contexto de empresa aquí
-        setLoading(false);
-        setShowOnboarding(false);
-        setEmpresa(res.data.nombre);
-      }, 500);
-    }
-  };
-
+ 
   // Simulación de refresco de ofertas
   const handleOfferCreated = (newOffer) => {
     setOffers((prev) => [newOffer, ...prev]);
@@ -247,9 +230,9 @@ const CompanyDashboard: React.FC = () => {
     }
   ];
 
-  if (showOnboarding) {
+  /* if (showOnboarding) {
     return <EmpresaOnboardingForm onSubmit={handleEmpresaSubmit} loading={loading} />;
-  }
+  } */
 
   return (
     <Layout>
