@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,8 +13,16 @@ import {
   Users
 } from 'lucide-react';
 import Layout from '@/components/Layout';
+import EmpresaOnboardingForm from './EmpresaOnboardingForm';
+import { endpoints } from '@/constants/endpoints';
+import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
 
 const HiringGroupDashboard: React.FC = () => {
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [loading, setLoading] = useState(false) 
+  const { setEmpresa, user } = useAuth()
+  
   const stats = [
     {
       title: 'Empresas Gestionadas',
@@ -66,6 +74,31 @@ const HiringGroupDashboard: React.FC = () => {
     }
   };
 
+  const showOnboardingForm = () => {
+    setShowOnboarding(true);
+  }
+
+   // Simulación de guardado, reemplazar con llamada real a API
+  const handleEmpresaSubmit = async (data: { sector: string; nombre: string; direccion: string }) => {
+    setLoading(true);
+    // Aquí deberías hacer la petición a tu backend para crear la empresa
+    const fullUrl = endpoints.base + endpoints.completarEmpresa(user.id);
+    const res = await axios.patch(fullUrl, data);
+    if (res.status === 200 && res.data) {
+      setTimeout(() => {
+        // Idealmente, deberías actualizar el contexto de empresa aquí
+        setLoading(false);
+        setShowOnboarding(false);
+        setEmpresa(res.data.nombre);
+      }, 500);
+    }
+  };
+
+
+  if (showOnboarding) {
+    return <EmpresaOnboardingForm onSubmit={handleEmpresaSubmit} loading={loading} />;
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -82,7 +115,7 @@ const HiringGroupDashboard: React.FC = () => {
               <Calculator className="w-4 h-4" />
               <span>Procesar Nómina</span>
             </Button>
-            <Button className="flex items-center space-x-2 bg-gradient-primary">
+            <Button className="flex items-center space-x-2 bg-gradient-primary" onClick={showOnboardingForm}>
               <UserPlus className="w-4 h-4" />
               <span>Nueva Empresa</span>
             </Button>
