@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import EmpresaOnboardingForm from './EmpresaOnboardingForm';
 import axios from 'axios';
 import { endpoints } from '@/constants/endpoints';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -230,9 +229,6 @@ const CompanyDashboard: React.FC = () => {
     }
   ];
 
-  /* if (showOnboarding) {
-    return <EmpresaOnboardingForm onSubmit={handleEmpresaSubmit} loading={loading} />;
-  } */
 
   return (
     <Layout>

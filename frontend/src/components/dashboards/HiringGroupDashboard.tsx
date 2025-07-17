@@ -81,22 +81,28 @@ const HiringGroupDashboard: React.FC = () => {
    // Simulación de guardado, reemplazar con llamada real a API
   const handleEmpresaSubmit = async (data: { sector: string; nombre: string; direccion: string }) => {
     setLoading(true);
-    // Aquí deberías hacer la petición a tu backend para crear la empresa
     const fullUrl = endpoints.base + endpoints.completarEmpresa(user.id);
-    const res = await axios.patch(fullUrl, data);
-    if (res.status === 200 && res.data) {
-      setTimeout(() => {
-        // Idealmente, deberías actualizar el contexto de empresa aquí
+    try {
+      const res = await axios.patch(fullUrl, data);
+      if (res.status === 200 && res.data) {
+        setTimeout(() => {
+          setLoading(false);
+          setShowOnboarding(false);
+          setEmpresa(res.data.nombre);
+        }, 500);
+      } else {
         setLoading(false);
-        setShowOnboarding(false);
-        setEmpresa(res.data.nombre);
-      }, 500);
+        console.error('Error al crear la empresa:', res);
+      }
+    } catch (error) {
+      console.error('Error en la petición de empresa:', error);
+      setTimeout(() => setLoading(false), 250);
     }
   };
 
 
   if (showOnboarding) {
-    return <EmpresaOnboardingForm onSubmit={handleEmpresaSubmit} loading={loading} />;
+    return <EmpresaOnboardingForm onSubmitEmpresa={handleEmpresaSubmit} loading={loading} />;
   }
 
   return (

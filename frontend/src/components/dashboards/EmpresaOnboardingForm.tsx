@@ -9,9 +9,9 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import * as z from 'zod';
+import { useEmpresaOnboarding } from '@/hooks/useEmpresaOnboarding';
 
 // Paso 1: Schema para datos de usuario
-
 const userSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
@@ -25,7 +25,7 @@ const userSchema = z.object({
   path: ['password2'],
 });
 
-type UserFormData = z.infer<typeof userSchema>;
+export type UserFormData = z.infer<typeof userSchema>;
 
 // Paso 2: Schema para datos de empresa
 const empresaSchema = z.object({
@@ -33,11 +33,10 @@ const empresaSchema = z.object({
   nombre: z.string().min(2, 'El nombre es requerido'),
   direccion: z.string().min(2, 'La dirección es requerida'),
 });
+export type EmpresaFormData = z.infer<typeof empresaSchema>;
 
-type EmpresaFormData = z.infer<typeof empresaSchema>;
-
-interface Props {
-  onSubmit: (data: UserFormData & EmpresaFormData) => void;
+interface EmpresaFormProps {
+  onSubmitEmpresa: (data: EmpresaFormData) => void;
   loading?: boolean;
 }
 
@@ -85,7 +84,8 @@ const Stepper: React.FC<{ step: number; canGoStep2: boolean; setStep: (s: number
 const UserStepForm: React.FC<{
   onSubmit: (data: UserFormData) => void;
   loading?: boolean;
-}> = ({ onSubmit, loading }) => {
+  disabled?: boolean;
+}> = ({ onSubmit, loading, disabled }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showPassword2, setShowPassword2] = useState(false);
   const methods = useForm<UserFormData>({
@@ -106,7 +106,7 @@ const UserStepForm: React.FC<{
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" autoComplete="off">
         <div className="space-y-1">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="Correo electrónico" {...register('email')} className={classNames({ 'border-destructive': errors.email })} />
+          <Input id="email" type="email" placeholder="Correo electrónico" {...register('email')} className={classNames({ 'border-destructive': errors.email })} disabled={disabled} />
           {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-1 relative">
@@ -117,6 +117,7 @@ const UserStepForm: React.FC<{
             placeholder="Contraseña"
             {...register('password')}
             className={classNames({ 'border-destructive': errors.password, 'pr-10': true })}
+            disabled={disabled}
           />
           <button
             type="button"
@@ -124,6 +125,7 @@ const UserStepForm: React.FC<{
             className="absolute right-2 top-1/2 text-muted-foreground"
             style={{ top: '50%' }}
             onClick={() => setShowPassword((v) => !v)}
+            disabled={disabled}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -137,6 +139,7 @@ const UserStepForm: React.FC<{
             placeholder="Repite la contraseña"
             {...register('password2')}
             className={classNames({ 'border-destructive': errors.password2, 'pr-10': true })}
+            disabled={disabled}
           />
           <button
             type="button"
@@ -144,6 +147,7 @@ const UserStepForm: React.FC<{
             className="absolute right-2 top-1/2 text-muted-foreground"
             style={{ top: '50%' }}
             onClick={() => setShowPassword2((v) => !v)}
+            disabled={disabled}
           >
             {showPassword2 ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -151,17 +155,17 @@ const UserStepForm: React.FC<{
         </div>
         <div className="space-y-1">
           <Label htmlFor="nombre">Nombre</Label>
-          <Input id="nombre" type="text" placeholder="Nombre" {...register('nombre')} className={classNames({ 'border-destructive': errors.nombre })} />
+          <Input id="nombre" type="text" placeholder="Nombre" {...register('nombre')} className={classNames({ 'border-destructive': errors.nombre })} disabled={disabled} />
           {errors.nombre && <p className="text-sm text-destructive">{errors.nombre.message}</p>}
         </div>
         <div className="space-y-1">
           <Label htmlFor="apellido">Apellido</Label>
-          <Input id="apellido" type="text" placeholder="Apellido" {...register('apellido')} className={classNames({ 'border-destructive': errors.apellido })} />
+          <Input id="apellido" type="text" placeholder="Apellido" {...register('apellido')} className={classNames({ 'border-destructive': errors.apellido })} disabled={disabled} />
           {errors.apellido && <p className="text-sm text-destructive">{errors.apellido.message}</p>}
         </div>
         <div className="space-y-1">
           <Label htmlFor="telefono">Teléfono</Label>
-          <Input id="telefono" type="text" placeholder="Teléfono" {...register('telefono')} className={classNames({ 'border-destructive': errors.telefono })} />
+          <Input id="telefono" type="text" placeholder="Teléfono" {...register('telefono')} className={classNames({ 'border-destructive': errors.telefono })} disabled={disabled} />
           {errors.telefono && <p className="text-sm text-destructive">{errors.telefono.message}</p>}
         </div>
         <div className="space-y-1" style={{ display: 'none' }}>
@@ -171,6 +175,7 @@ const UserStepForm: React.FC<{
             {...register('role')}
             className={classNames('w-full rounded-md border px-3 py-2', { 'border-destructive': errors.role })}
             defaultValue="EMPRESA"
+            disabled={disabled}
           >
             <option value="EMPRESA">Empresa</option>
           </select>
@@ -183,6 +188,7 @@ const UserStepForm: React.FC<{
     </FormProvider>
   );
 };
+
 
 // Segundo paso: formulario de empresa
 const EmpresaStepForm: React.FC<{
@@ -223,19 +229,20 @@ const EmpresaStepForm: React.FC<{
   );
 };
 
-const EmpresaOnboardingForm: React.FC<Props> = ({ onSubmit, loading }) => {
-  const [step, setStep] = useState(1);
-  const [userData, setUserData] = useState<UserFormData | null>(null);
 
-  const handleUserStep = (data: UserFormData) => {
-    setUserData(data);
-    setStep(2);
-  };
-  const handleEmpresaStep = (empresaData: EmpresaFormData) => {
-    if (userData) {
-      onSubmit({ ...userData, ...empresaData });
-    }
-  };
+
+
+
+
+const EmpresaOnboardingForm: React.FC<EmpresaFormProps> = ({ onSubmitEmpresa, loading }) => {
+  const {
+    step,
+    setStep,
+    userData,
+    userCreated,
+    handleUserStep,
+    handleEmpresaStep
+  } = useEmpresaOnboarding(onSubmitEmpresa);
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-1">
@@ -259,7 +266,7 @@ const EmpresaOnboardingForm: React.FC<Props> = ({ onSubmit, loading }) => {
           </CardHeader>
           <CardContent>
             {step === 1 ? (
-              <UserStepForm onSubmit={handleUserStep} loading={loading} />
+              <UserStepForm onSubmit={handleUserStep} loading={loading} disabled={userCreated} />
             ) : (
               <EmpresaStepForm onSubmit={handleEmpresaStep} loading={loading} onBack={() => setStep(1)} />
             )}
