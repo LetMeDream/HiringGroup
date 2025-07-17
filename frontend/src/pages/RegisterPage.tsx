@@ -25,7 +25,16 @@ const RegisterPage: React.FC = () => {
     handleSubmit,
     formState: { errors }
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema)
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: 'test@mail.col',
+      username: 'usernamemm',
+      lastname: 'lastaaname',
+      telefono: '09761294234',
+      password: '123123',
+      confirmPassword: '123123',
+      userType: 'candidato',
+    },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -141,9 +150,8 @@ const RegisterPage: React.FC = () => {
                   defaultValue=""
                 >
                   <option value="" disabled>Selecciona un tipo de usuario</option>
-                  <option value="hiring">Hiring</option>
-                  <option value="empresa">Empresa</option>
                   <option value="candidato">Candidato</option>
+                  <option value="hiring">Hiring</option>
                 </select>
                 {errors.userType && (
                   <p className="text-sm text-destructive">{errors.userType.message}</p>
