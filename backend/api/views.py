@@ -200,16 +200,18 @@ def actualizar_datos_empresa(request, usuario_id):
 
 class OfertaListCreateView(APIView):
     permission_classes = [AllowAny]
-    """
-    Vista para listar todas las ofertas y crear una nueva oferta.
-    - GET /api/ofertas/: Lista todas las ofertas.
-    - POST /api/ofertas/: Crea una nueva oferta.
-    """
-    def get(self, request, user_id):
-        empresa = Empresa.objects.filter(usuario_id=user_id).first()
-        if not empresa:
-            return Response({'error': 'No tienes empresa asociada.'}, status=status.HTTP_400_BAD_REQUEST)
-        ofertas = Oferta.objects.filter(empresa=empresa)
+
+    # GET /api/ofertas/  --> Todas las ofertas activas
+    def get(self, request, user_id=None):
+        if user_id:
+            # Ofertas de una empresa específica
+            empresa = Empresa.objects.filter(usuario_id=user_id).first()
+            if not empresa:
+                return Response({'error': 'No tienes empresa asociada.'}, status=400)
+            ofertas = Oferta.objects.filter(empresa=empresa)
+        else:
+            # Todas las ofertas activas
+            ofertas = Oferta.objects.filter(activa=True)
         serializer = OfertaSerializer(ofertas, many=True)
         return Response(serializer.data)
 
@@ -236,8 +238,13 @@ class OfertaListCreateView(APIView):
         serializer = OfertaSerializer(oferta)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class OfertaListView(APIView):
+    permission_classes = [AllowAny]
 
-
+    def get(self, request):
+        ofertas = Oferta.objects.filter(activa=True)
+        serializer = OfertaSerializer(ofertas, many=True)
+        return Response(serializer.data)
 
 # Aquí irían los otros ViewSets o Vistas para Vacante, Postulacion, etc.
 # from .models import Vacante, Postulacion, ...

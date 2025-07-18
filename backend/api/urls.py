@@ -1,7 +1,7 @@
 # En api/urls.py
 from django.urls import path
 from .views import UsuarioListCreateView, UsuarioDetailView, UsuarioLoginView, EmpresaListCreateView, actualizar_datos_empresa
-from .views import OfertaListCreateView
+from .views import OfertaListCreateView, OfertaListView
 
 urlpatterns = [
     # Rutas para el modelo Usuario
@@ -14,6 +14,5 @@ urlpatterns = [
     path('empresas/', EmpresaListCreateView.as_view(), name='empresa-list-create'),
     path('empresas/<int:usuario_id>/actualizar/', actualizar_datos_empresa, name='empresa-actualizar'),
     # Ofertas
-    path('ofertas/', OfertaListCreateView.as_view(), name='oferta-list-create'),
-    path('ofertas/<int:user_id>/', OfertaListCreateView.as_view(), name='oferta-detail'),
+    path('ofertas/', OfertaListView.as_view(), name='oferta-list'),
 ]

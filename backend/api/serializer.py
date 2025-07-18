@@ -100,10 +100,12 @@ class EmpresaSerializer(serializers.ModelSerializer):
 # ===================================================================
 
 class OfertaSerializer(serializers.ModelSerializer):
-    """
-    Serializer para el modelo Oferta.
-    Incluye los campos necesarios para crear o actualizar una oferta.
-    """
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
+    ubicacion = serializers.CharField(source='empresa.direccion', read_only=True)
+
     class Meta:
         model = Oferta
-        fields = '__all__'
+        fields = [
+            'id', 'profesion', 'cargo', 'descripcion', 'salario', 'activa', 'estado',
+            'empresa_nombre', 'ubicacion', 'fecha_publicacion'
+        ]

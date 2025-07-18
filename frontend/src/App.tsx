@@ -11,6 +11,7 @@ import DashboardPage from "./pages/DashboardPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
+import OfertasCandidateDashboard from "@/components/dashboards/OfertasCandidateDashboard";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,14 @@ const AppRoutes = () => {
             <DashboardPage />
           </ProtectedRoute>
         } 
+      />
+      <Route
+        path="/ofertas"
+        element={
+          <ProtectedRoute>
+            <OfertasCandidateDashboard />
+          </ProtectedRoute>
+        }
       />
       
       {/* Unauthorized access */}

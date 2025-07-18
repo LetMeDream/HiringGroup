@@ -15,8 +15,11 @@ import {
   AlertCircle
 } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { useNavigate } from 'react-router-dom';
 
 const CandidateDashboard: React.FC = () => {
+  const navigate = useNavigate();
+
   const stats = [
     {
       title: 'Aplicaciones Enviadas',
@@ -125,7 +128,10 @@ const CandidateDashboard: React.FC = () => {
               <User className="w-4 h-4" />
               <span>Editar Perfil</span>
             </Button>
-            <Button className="flex items-center space-x-2 bg-gradient-primary">
+            <Button
+              className="flex items-center space-x-2 bg-gradient-primary"
+              onClick={() => navigate('/ofertas')}
+            >
               <Search className="w-4 h-4" />
               <span>Buscar Ofertas</span>
             </Button>
