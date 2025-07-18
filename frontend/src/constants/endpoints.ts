@@ -3,4 +3,6 @@ export const endpoints = {
   registerUser: 'api/usuarios/',
   login: 'api/login/',
   completarEmpresa: (id) => `api/empresas/${id}/actualizar/`,
+  oferta:'api/ofertas/',
+  ofertasTodas: 'api/ofertas_todas/',
 }
