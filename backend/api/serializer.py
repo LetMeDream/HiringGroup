@@ -6,7 +6,8 @@ from .models import (
     CandidatoProfile, 
     ExperienciaLaboral,
     Empresa,
-    Oferta
+    Oferta,
+    Postulacion
 )
 
 # ===================================================================
@@ -108,4 +109,22 @@ class OfertaSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'profesion', 'cargo', 'descripcion', 'salario', 'activa', 'estado',
             'empresa_nombre', 'ubicacion', 'fecha_publicacion'
+        ]
+
+# ===================================================================
+# Serializers para el manejo de postulaciones
+# ===================================================================
+
+class PostulacionSerializer(serializers.ModelSerializer):
+    postulante_nombre = serializers.CharField(source='postulante.nombre', read_only=True)
+    postulante_email = serializers.CharField(source='postulante.email', read_only=True)
+
+    class Meta:
+        model = Postulacion
+        fields = [
+            'id',
+            'postulante_nombre',
+            'postulante_email',
+            'estado',
+            'fecha_postulacion',
         ]

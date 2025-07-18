@@ -18,12 +18,14 @@ import { endpoints } from '@/constants/endpoints';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
 import { useStore } from '@/store/store';
+import { useNavigate } from 'react-router-dom';
 
 const HiringGroupDashboard: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [loading, setLoading] = useState(false) 
   const { setEmpresa, user } = useAuth()
   const { usuarioEmpresa } = useStore();
+  const navigate = useNavigate();
   
   const stats = [
     {
@@ -181,7 +183,7 @@ const HiringGroupDashboard: React.FC = () => {
                     <Building className="w-6 h-6 mb-2" />
                     <span>Perfil de Empresas</span>
                   </Button>
-                  <Button variant="outline" className="h-20 flex-col">
+                  <Button variant="outline" className="h-20 flex-col" onClick={() => navigate('/contrataciones')}>
                     <UserCheck className="w-6 h-6 mb-2" />
                     <span>Contrataciones</span>
                   </Button>

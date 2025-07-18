@@ -12,6 +12,7 @@ import UnauthorizedPage from "./pages/UnauthorizedPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import OfertasCandidateDashboard from "@/components/dashboards/OfertasCandidateDashboard";
+import ContratacionesOnHiringDashboard from "@/components/dashboards/ContratacionesOnHiringDashboard";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <OfertasCandidateDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/contrataciones"
+        element={
+          <ProtectedRoute>
+            <ContratacionesOnHiringDashboard />
           </ProtectedRoute>
         }
       />

@@ -13,7 +13,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Usuario, Empresa, Oferta, Postulacion
-from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer
+from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer, PostulacionSerializer
 
 # ===================================================================
 # Vistas Individuales para el modelo Usuario
@@ -279,6 +279,53 @@ class PostulacionCreateView(APIView):
             postulante=postulante
         )
         return Response({'message': 'Postulación exitosa.'}, status=201)
+
+# ===================================================================
+# Contrataciones.
+# ===================================================================
+
+class OfertaPostulacionesListView(APIView):
+    def get(self, request, oferta_id):
+        postulaciones = Postulacion.objects.filter(oferta_id=oferta_id)
+        serializer = PostulacionSerializer(postulaciones, many=True)
+        return Response(serializer.data)
+
+class PostulacionContratarView(APIView):
+    permission_classes = [AllowAny]  # Cambia a IsAdminUser si quieres restringir
+
+    def post(self, request, postulacion_id):
+        try:
+            postulacion = Postulacion.objects.get(id=postulacion_id)
+            oferta = postulacion.oferta
+            usuario = postulacion.postulante
+
+            # Cambiar estado de la postulación
+            postulacion.estado = 'contratado'
+            postulacion.save()
+
+            # Cambiar rol del usuario a empleado
+            usuario.role = 'contratado'
+            usuario.save()
+
+            # Cambiar oferta a inactiva
+            oferta.activa = False
+            oferta.save()
+
+            return Response({'message': 'Candidato contratado y oferta cerrada.'}, status=status.HTTP_200_OK)
+        except Postulacion.DoesNotExist:
+            return Response({'error': 'Postulación no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+class PostulacionRechazarView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, postulacion_id):
+        try:
+            postulacion = Postulacion.objects.get(id=postulacion_id)
+            postulacion.estado = 'rechazado'
+            postulacion.save()
+            return Response({'message': 'Candidato rechazado.'}, status=status.HTTP_200_OK)
+        except Postulacion.DoesNotExist:
+            return Response({'error': 'Postulación no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
 # Aquí irían los otros ViewSets o Vistas para Vacante, Postulacion, etc.
 # from .models import Vacante, Postulacion, ...
