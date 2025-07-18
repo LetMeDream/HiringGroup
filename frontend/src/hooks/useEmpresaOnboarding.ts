@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { endpoints } from '@/constants/endpoints';
 import axios from 'axios';
 import { UserFormData, EmpresaFormData } from '../components/dashboards/EmpresaOnboardingForm';
+import { useStore } from '@/store/store';
 
 export function useEmpresaOnboarding(onSubmitEmpresa: (data: EmpresaFormData) => void) {
   const [step, setStep] = useState(1);
   const [userData, setUserData] = useState<UserFormData | null>(null);
   const [userCreated, setUserCreated] = useState(false);
+  const { setUsuarioEmpresa } = useStore();
 
   const handleUserStep = async (data: UserFormData) => {
     if (userCreated) {
@@ -19,6 +21,7 @@ export function useEmpresaOnboarding(onSubmitEmpresa: (data: EmpresaFormData) =>
       const res = await axios.post(baseUrl, data);
       if (res.status === 200 || res.status === 201) {
         setUserData(res.data);
+        setUsuarioEmpresa(res.data)
         setUserCreated(true);
         setStep(2);
       }

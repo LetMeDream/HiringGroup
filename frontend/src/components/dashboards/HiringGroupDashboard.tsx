@@ -17,11 +17,13 @@ import EmpresaOnboardingForm from './EmpresaOnboardingForm';
 import { endpoints } from '@/constants/endpoints';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
+import { useStore } from '@/store/store';
 
 const HiringGroupDashboard: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [loading, setLoading] = useState(false) 
   const { setEmpresa, user } = useAuth()
+  const { usuarioEmpresa } = useStore();
   
   const stats = [
     {
@@ -81,7 +83,7 @@ const HiringGroupDashboard: React.FC = () => {
    // Simulación de guardado, reemplazar con llamada real a API
   const handleEmpresaSubmit = async (data: { sector: string; nombre: string; direccion: string }) => {
     setLoading(true);
-    const fullUrl = endpoints.base + endpoints.completarEmpresa(user.id);
+    const fullUrl = endpoints.base + endpoints.completarEmpresa(usuarioEmpresa.id);
     try {
       const res = await axios.patch(fullUrl, data);
       if (res.status === 200 && res.data) {
