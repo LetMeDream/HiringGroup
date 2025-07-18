@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Usuario, Empresa, Oferta
+from .models import Usuario, Empresa, Oferta, Postulacion
 from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer
 
 # ===================================================================
@@ -245,6 +245,40 @@ class OfertaListView(APIView):
         ofertas = Oferta.objects.filter(activa=True)
         serializer = OfertaSerializer(ofertas, many=True)
         return Response(serializer.data)
+
+# ===================================================================
+# Vistas para el modelo Postulacion
+# ===================================================================
+
+class PostulacionCreateView(APIView):
+    permission_classes = [AllowAny]  # Permitir a cualquier usuario
+
+    def post(self, request):
+        oferta_id = request.data.get('oferta_id')
+        email = request.data.get('email')  # o username si prefieres
+
+        if not oferta_id or not email:
+            return Response({'error': 'Faltan datos requeridos.'}, status=400)
+
+        try:
+            oferta = Oferta.objects.get(id=oferta_id)
+        except Oferta.DoesNotExist:
+            return Response({'error': 'Oferta no encontrada.'}, status=404)
+
+        try:
+            postulante = Usuario.objects.get(email=email)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario postulante no encontrado.'}, status=404)
+
+        # Evitar postulaciones duplicadas
+        if Postulacion.objects.filter(oferta=oferta, postulante=postulante).exists():
+            return Response({'error': 'Ya te has postulado a esta oferta.'}, status=400)
+
+        Postulacion.objects.create(
+            oferta=oferta,
+            postulante=postulante
+        )
+        return Response({'message': 'Postulación exitosa.'}, status=201)
 
 # Aquí irían los otros ViewSets o Vistas para Vacante, Postulacion, etc.
 # from .models import Vacante, Postulacion, ...

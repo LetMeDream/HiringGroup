@@ -31,7 +31,7 @@ const OfertasCandidateDashboard: React.FC = () => {
     const fetchOfertas = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(endpoints.base + 'api/ofertas/');
+        const res = await axios.get(endpoints.base + endpoints.ofertasTodas);
         console.log(res.data); // <-- Agrega esto para depurar
         setOfertas(res.data);
       } catch (error) {
@@ -42,6 +42,21 @@ const OfertasCandidateDashboard: React.FC = () => {
 
     fetchOfertas();
   }, []);
+
+  const handlePostularme = async (ofertaId: number) => {
+    const email = prompt("Ingresa tu correo electrónico para postularte:");
+    if (!email) return alert("Debes ingresar tu correo para postularte.");
+
+    try {
+      await axios.post(
+        endpoints.base + 'api/postular/',
+        { oferta_id: ofertaId, email }
+      );
+      alert('¡Te has postulado exitosamente!');
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Error al postularte');
+    }
+  };
 
   return (
     <Layout>
@@ -106,7 +121,11 @@ const OfertasCandidateDashboard: React.FC = () => {
                         <Eye className="w-4 h-4 mr-1" />
                         Ver Detalle
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePostularme(oferta.id)}
+                      >
                         Postularme
                       </Button>
                     </div>
