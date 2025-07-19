@@ -304,7 +304,7 @@ class PostulacionContratarView(APIView):
             postulacion.save()
 
             # Cambiar rol del usuario a empleado
-            usuario.role = 'contratado'
+            usuario.role = 'CONTRATADO'
             usuario.save()
 
             # Cambiar oferta a inactiva

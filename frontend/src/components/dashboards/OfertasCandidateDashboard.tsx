@@ -8,6 +8,7 @@ import axios from 'axios';
 import { endpoints } from '@/constants/endpoints';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CandidateDashboard from '@/components/dashboards/CandidateDashboard';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface OfertaEmpresa {
   id: number;
@@ -25,7 +26,8 @@ interface OfertaEmpresa {
 const OfertasCandidateDashboard: React.FC = () => {
   const [ofertas, setOfertas] = useState<OfertaEmpresa[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const { user } = useAuth();
+  
   useEffect(() => {
     // Aquí se hace la petición para obtener las ofertas creadas por empresas
     const fetchOfertas = async () => {
@@ -44,8 +46,7 @@ const OfertasCandidateDashboard: React.FC = () => {
   }, []);
 
   const handlePostularme = async (ofertaId: number) => {
-    const email = prompt("Ingresa tu correo electrónico para postularte:");
-    if (!email) return alert("Debes ingresar tu correo para postularte.");
+    const email = user.email
 
     try {
       await axios.post(

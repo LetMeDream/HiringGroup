@@ -24,19 +24,19 @@ const ContratacionesOnHiringDashboard: React.FC = () => {
   const [postulaciones, setPostulaciones] = useState<Postulacion[]>([]);
   const [selectedOferta, setSelectedOferta] = useState<Oferta | null>(null);
   const [loading, setLoading] = useState(false);
+  // Traer todas las ofertas
+  const fetchOfertas = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(endpoints.base + 'api/ofertas/');
+      setOfertas(res.data);
+    } catch {
+      setOfertas([]);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    // Traer todas las ofertas
-    const fetchOfertas = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(endpoints.base + 'api/ofertas/');
-        setOfertas(res.data);
-      } catch {
-        setOfertas([]);
-      }
-      setLoading(false);
-    };
     fetchOfertas();
   }, []);
 
@@ -55,11 +55,14 @@ const ContratacionesOnHiringDashboard: React.FC = () => {
   const handleContratar = async (postulacionId: number) => {
     if (!window.confirm('¿Seguro que deseas contratar a este candidato?')) return;
     try {
-      await axios.post(endpoints.base + `api/postulaciones/${postulacionId}/contratar/`);
-      alert('Candidato contratado y oferta cerrada.');
-      // Refresca postulaciones y ofertas
-      setSelectedOferta(null);
-      // Opcional: puedes volver a cargar las ofertas aquí
+      const response = await axios.post(endpoints.base + `api/postulaciones/${postulacionId}/contratar/`);
+      if (response.status === 200 && response.data) { 
+        alert('Candidato contratado y oferta cerrada.');
+        // Refresca postulaciones y ofertas
+        setSelectedOferta(null);
+        // Opcional: puedes volver a cargar las ofertas aquí
+        fetchOfertas();
+      }
     } catch (e) {
       alert('Error al contratar');
     }

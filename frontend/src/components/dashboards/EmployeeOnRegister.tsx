@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
+import { endpoints } from '@/constants/endpoints';
 
 interface EmpresaInfo {
   nombre: string;
@@ -49,8 +50,7 @@ export const ContratacionOnboardingModal: React.FC<ContratacionOnboardingModalPr
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(
-        `/api/contrataciones/`, // Ajusta si tu endpoint es diferente
+      await axios.post(endpoints.base +  `/api/contrataciones/`, // Ajusta si tu endpoint es diferente
         {
           postulacion: postulacionId,
           ...form,

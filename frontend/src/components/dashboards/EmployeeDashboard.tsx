@@ -26,7 +26,7 @@ const EmployeeDashboard: React.FC = () => {
   const [postulacionId, setPostulacionId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (user?.role === 'contratado') {
+    if (user?.role.toLowerCase() === 'contratado') {
       axios.get(endpoints.base + `api/usuarios/${user.id}/contratacion-status/`)
         .then(res => {
           if (!res.data.has_contratacion && res.data.postulacion_id && res.data.empresa) {
