@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Usuario, Empresa, Oferta, Postulacion
-from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer, PostulacionSerializer
+from .models import Usuario, Empresa, Oferta, Postulacion, Contratacion, Banco
+from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer, PostulacionSerializer, ContratacionSerializer
 
 # ===================================================================
 # Vistas Individuales para el modelo Usuario
@@ -300,11 +300,11 @@ class PostulacionContratarView(APIView):
             usuario = postulacion.postulante
 
             # Cambiar estado de la postulación
-            postulacion.estado = 'CONTRATADO'
+            postulacion.estado = 'contratado'
             postulacion.save()
 
             # Cambiar rol del usuario a empleado
-            usuario.role = 'CONTRATADO'
+            usuario.role = 'contratado'
             usuario.save()
 
             # Cambiar oferta a inactiva
@@ -327,9 +327,55 @@ class PostulacionRechazarView(APIView):
         except Postulacion.DoesNotExist:
             return Response({'error': 'Postulación no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-# Aquí irían los otros ViewSets o Vistas para Vacante, Postulacion, etc.
-# from .models import Vacante, Postulacion, ...
-# from .serializers import VacanteSerializer, PostulacionSerializer, ...
+class ContratacionCreateView(APIView):
+    def post(self, request):
+        data = request.data.copy()
+        try:
+            postulacion = Postulacion.objects.get(id=data['postulacion'])
+        except Postulacion.DoesNotExist:
+            return Response({'error': 'Postulación no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+        # Si tienes modelo Banco, puedes buscarlo por nombre o id
+        banco = None
+        if 'banco' in data and data['banco']:
+            banco, _ = Banco.objects.get_or_create(nombre=data['banco'])
+        contratacion = Contratacion.objects.create(
+            postulacion=postulacion,
+            tiempo_contratacion=data['tiempo_contratacion'],
+            salario_mensual=data['salario_mensual'],
+            tipo_sangre=data.get('tipo_sangre', ''),
+            contacto_emergencia=data.get('contacto_emergencia', ''),
+            telefono_emergencia=data.get('telefono_emergencia', ''),
+            banco=banco,
+            numero_cuenta=data.get('numero_cuenta', ''),
+        )
+        return Response(ContratacionSerializer(contratacion).data, status=status.HTTP_201_CREATED)
 
-# class VacanteListView(APIView):
-#     # ...
+class UsuarioPostulacionesView(APIView):
+    """
+    Devuelve todas las postulaciones de un usuario.
+    GET /api/usuarios/<id>/postulaciones/
+    """
+    def get(self, request, pk):
+        postulaciones = Postulacion.objects.filter(postulante_id=pk)
+        serializer = PostulacionSerializer(postulaciones, many=True)
+        return Response(serializer.data)
+
+class UsuarioContratacionStatusView(APIView):
+    def get(self, request, user_id):
+        # Busca la postulación contratada más reciente
+        postulacion = Postulacion.objects.filter(postulante_id=user_id, estado='contratado').order_by('-fecha_postulacion').first()
+        if not postulacion:
+            return Response({'has_contratacion': False, 'postulacion_id': None, 'empresa': None})
+        contratacion = Contratacion.objects.filter(postulacion=postulacion).first()
+        empresa = postulacion.oferta.empresa
+        return Response({
+            'has_contratacion': contratacion is not None,
+            'postulacion_id': postulacion.id,
+            'empresa': {
+                'nombre': empresa.nombre,
+                'sector': empresa.sector,
+                'persona_contacto': empresa.persona_contacto,
+                'telefono_contacto': empresa.telefono_contacto,
+                'direccion': empresa.direccion,
+            }
+        })

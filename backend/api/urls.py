@@ -2,12 +2,13 @@
 from django.urls import path
 from .views import UsuarioListCreateView, UsuarioDetailView, UsuarioLoginView, EmpresaListCreateView, actualizar_datos_empresa
 from .views import OfertaListCreateView, OfertaListView, PostulacionCreateView, OfertaPostulacionesListView
-from .views import PostulacionContratarView, PostulacionRechazarView
+from .views import PostulacionContratarView, PostulacionRechazarView, ContratacionCreateView, UsuarioPostulacionesView, UsuarioContratacionStatusView
 
 urlpatterns = [
     # Rutas para el modelo Usuario
     path('usuarios/', UsuarioListCreateView.as_view(), name='usuario-list-create'),
     path('usuarios/<int:pk>/', UsuarioDetailView.as_view(), name='usuario-detail'),
+    path('usuarios/<int:pk>/postulaciones/', UsuarioPostulacionesView.as_view(), name='usuario-postulaciones'),
     # ... otras rutas para tu API
     # Path de login
     path('login/', UsuarioLoginView.as_view(), name='usuario-login'),
@@ -26,4 +27,7 @@ urlpatterns = [
     # Contratar o rechazar postulaciones
     path('postulaciones/<int:postulacion_id>/contratar/', PostulacionContratarView.as_view()),
     path('postulaciones/<int:postulacion_id>/rechazar/', PostulacionRechazarView.as_view()),
+    # Contrataciones
+    path('contrataciones/', ContratacionCreateView.as_view(), name='contratacion-create'),
+    path('usuarios/<int:user_id>/contratacion-status/', UsuarioContratacionStatusView.as_view()),
 ]

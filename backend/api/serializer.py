@@ -7,7 +7,8 @@ from .models import (
     ExperienciaLaboral,
     Empresa,
     Oferta,
-    Postulacion
+    Postulacion,
+    Contratacion
 )
 
 # ===================================================================
@@ -127,4 +128,24 @@ class PostulacionSerializer(serializers.ModelSerializer):
             'postulante_email',
             'estado',
             'fecha_postulacion',
+        ]
+
+# ===================================================================
+# Serializers para el manejo de contrataciones
+# ===================================================================
+
+class ContratacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contratacion
+        fields = [
+            'id',
+            'postulacion',
+            'tiempo_contratacion',
+            'salario_mensual',
+            'fecha_contratacion',
+            'tipo_sangre',
+            'contacto_emergencia',
+            'telefono_emergencia',
+            'banco',
+            'numero_cuenta',
         ]

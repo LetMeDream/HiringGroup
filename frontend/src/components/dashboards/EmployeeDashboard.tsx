@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +14,30 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { ContratacionOnboardingModal } from './EmployeeOnRegister';
+import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
+import { endpoints } from '@/constants/endpoints';
 
 const EmployeeDashboard: React.FC = () => {
+  const { user } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [empresa, setEmpresa] = useState<any>(null);
+  const [postulacionId, setPostulacionId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (user?.role === 'contratado') {
+      axios.get(endpoints.base + `api/usuarios/${user.id}/contratacion-status/`)
+        .then(res => {
+          if (!res.data.has_contratacion && res.data.postulacion_id && res.data.empresa) {
+            setEmpresa(res.data.empresa);
+            setPostulacionId(res.data.postulacion_id);
+            setShowOnboarding(true);
+          }
+        });
+    }
+  }, [user]);
+
   const employeeInfo = {
     employeeId: 'EMP-2023-0145',
     position: 'Desarrollador Full Stack',
@@ -112,6 +134,16 @@ const EmployeeDashboard: React.FC = () => {
 
   return (
     <Layout>
+      {/* Modal de onboarding */}
+      {showOnboarding && empresa && postulacionId && (
+        <ContratacionOnboardingModal
+          open={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
+          empresa={empresa}
+          postulacionId={postulacionId}
+          onSuccess={() => setShowOnboarding(false)}
+        />
+      )}
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
