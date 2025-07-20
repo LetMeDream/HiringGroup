@@ -88,9 +88,20 @@ class CandidatoProfile(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='candidato_profile')
     profesion = models.CharField(max_length=255)
     universidad = models.CharField(max_length=255)
+    pais = models.CharField(max_length=100, default='No especificado')
+
+class InformacionPersonal(models.Model):
+    candidato_profile = models.ForeignKey(CandidatoProfile, on_delete=models.CASCADE, related_name='informacion_personal')
+    profesion = models.CharField(max_length=255)
+    universidad = models.CharField(max_length=255)
+    pais = models.CharField(max_length=100)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.profesion} - {self.universidad} ({self.pais})"
 
 class ExperienciaLaboral(models.Model):
-    candidato = models.ForeignKey(CandidatoProfile, on_delete=models.CASCADE, related_name='experiencias')
+    candidato_profile = models.ForeignKey(CandidatoProfile, on_delete=models.CASCADE, related_name='experiencias')
     empresa = models.CharField(max_length=255)
     cargo = models.CharField(max_length=255)
     fecha_inicio = models.DateField()

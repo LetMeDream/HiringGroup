@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Usuario, Empresa, Oferta, Postulacion, Contratacion, Banco
-from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer, PostulacionSerializer, ContratacionSerializer
+from .models import Usuario, Empresa, Oferta, Postulacion, Contratacion, Banco, CandidatoProfile, ExperienciaLaboral, InformacionPersonal
+from .serializer import UserSerializer, UserRegisterSerializer, EmpresaSerializer, OfertaSerializer, PostulacionSerializer, ContratacionSerializer, CandidatoProfileSerializer, ExperienciaLaboralSerializer, InformacionPersonalSerializer
 
 # ===================================================================
 # Vistas Individuales para el modelo Usuario
@@ -327,6 +327,221 @@ class PostulacionRechazarView(APIView):
         except Postulacion.DoesNotExist:
             return Response({'error': 'Postulación no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
+class PostulacionDeleteView(APIView):
+    """
+    Vista para cancelar/eliminar una postulación.
+    DELETE /api/postulaciones/<postulacion_id>/
+    """
+    permission_classes = [AllowAny]
+
+    def delete(self, request, postulacion_id):
+        try:
+            postulacion = Postulacion.objects.get(id=postulacion_id)
+            
+            # Verificar que la postulación pertenece al usuario que hace la petición
+            # (En un sistema real, deberías verificar la autenticación)
+            
+            # Solo permitir cancelar si está pendiente o en revisión
+            if postulacion.estado not in ['pendiente', 'revisado']:
+                return Response({
+                    'error': 'No se puede cancelar una postulación que ya ha sido procesada.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Eliminar la postulación
+            postulacion.delete()
+            
+            return Response({
+                'message': 'Postulación cancelada exitosamente.'
+            }, status=status.HTTP_200_OK)
+            
+        except Postulacion.DoesNotExist:
+            return Response({
+                'error': 'Postulación no encontrada.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al cancelar la postulación: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ExperienciaLaboralCreateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        try:
+            data = request.data.copy()
+            
+            # Get the candidato profile
+            candidato_profile_id = data.get('candidato_profile')
+            candidato_profile = CandidatoProfile.objects.get(usuario_id=candidato_profile_id)
+            
+            # Create the experience
+            experiencia = ExperienciaLaboral.objects.create(
+                candidato_profile=candidato_profile,
+                empresa=data.get('empresa'),
+                cargo=data.get('cargo'),
+                fecha_inicio=data.get('fecha_inicio'),
+                fecha_fin=data.get('fecha_fin', None)
+            )
+            
+            serializer = ExperienciaLaboralSerializer(experiencia)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except CandidatoProfile.DoesNotExist:
+            return Response({
+                'error': 'Perfil de candidato no encontrado.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al crear experiencia: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ExperienciaLaboralUpdateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def put(self, request, experiencia_id):
+        try:
+            experiencia = ExperienciaLaboral.objects.get(id=experiencia_id)
+            
+            # Update fields
+            data = request.data
+            experiencia.empresa = data.get('empresa', experiencia.empresa)
+            experiencia.cargo = data.get('cargo', experiencia.cargo)
+            experiencia.fecha_inicio = data.get('fecha_inicio', experiencia.fecha_inicio)
+            experiencia.fecha_fin = data.get('fecha_fin', experiencia.fecha_fin)
+            
+            experiencia.save()
+            
+            serializer = ExperienciaLaboralSerializer(experiencia)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except ExperienciaLaboral.DoesNotExist:
+            return Response({
+                'error': 'Experiencia laboral no encontrada.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al actualizar experiencia: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ExperienciaLaboralDeleteView(APIView):
+    permission_classes = [AllowAny]
+    
+    def delete(self, request, experiencia_id):
+        try:
+            experiencia = ExperienciaLaboral.objects.get(id=experiencia_id)
+            experiencia.delete()
+            
+            return Response({
+                'message': 'Experiencia laboral eliminada exitosamente.'
+            }, status=status.HTTP_200_OK)
+            
+        except ExperienciaLaboral.DoesNotExist:
+            return Response({
+                'error': 'Experiencia laboral no encontrada.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al eliminar experiencia: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class InformacionPersonalCreateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        try:
+            data = request.data.copy()
+            
+            # Get the candidato profile
+            candidato_profile_id = data.get('candidato_profile')
+            candidato_profile = CandidatoProfile.objects.get(usuario_id=candidato_profile_id)
+            
+            # Create the personal information
+            info_personal = InformacionPersonal.objects.create(
+                candidato_profile=candidato_profile,
+                profesion=data.get('profesion'),
+                universidad=data.get('universidad'),
+                pais=data.get('pais')
+            )
+            
+            serializer = InformacionPersonalSerializer(info_personal)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except CandidatoProfile.DoesNotExist:
+            return Response({
+                'error': 'Perfil de candidato no encontrado.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al crear información personal: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class InformacionPersonalUpdateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def put(self, request, info_id):
+        try:
+            info_personal = InformacionPersonal.objects.get(id=info_id)
+            
+            # Update fields
+            data = request.data
+            info_personal.profesion = data.get('profesion', info_personal.profesion)
+            info_personal.universidad = data.get('universidad', info_personal.universidad)
+            info_personal.pais = data.get('pais', info_personal.pais)
+            
+            info_personal.save()
+            
+            serializer = InformacionPersonalSerializer(info_personal)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except InformacionPersonal.DoesNotExist:
+            return Response({
+                'error': 'Información personal no encontrada.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al actualizar información personal: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class InformacionPersonalDeleteView(APIView):
+    permission_classes = [AllowAny]
+    
+    def delete(self, request, info_id):
+        try:
+            info_personal = InformacionPersonal.objects.get(id=info_id)
+            info_personal.delete()
+            
+            return Response({
+                'message': 'Información personal eliminada exitosamente.'
+            }, status=status.HTTP_200_OK)
+            
+        except InformacionPersonal.DoesNotExist:
+            return Response({
+                'error': 'Información personal no encontrada.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al eliminar información personal: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class InformacionPersonalListView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, user_id):
+        try:
+            candidato_profile = CandidatoProfile.objects.get(usuario_id=user_id)
+            informacion_personal = InformacionPersonal.objects.filter(candidato_profile=candidato_profile)
+            serializer = InformacionPersonalSerializer(informacion_personal, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except CandidatoProfile.DoesNotExist:
+            return Response({
+                'error': 'Perfil de candidato no encontrado.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error al obtener información personal: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ContratacionCreateView(APIView):
     def post(self, request):
         data = request.data.copy()
@@ -379,3 +594,105 @@ class UsuarioContratacionStatusView(APIView):
                 'direccion': empresa.direccion,
             }
         })
+
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from django.db.models import Count
+
+class OfertaViewSet(viewsets.ModelViewSet):
+    queryset = Oferta.objects.all()
+    serializer_class = OfertaSerializer
+    permission_classes = [AllowAny]
+    
+    @action(detail=True, methods=['post'])
+    def toggle_estado(self, request, pk=None):
+        oferta = self.get_object()
+        nuevo_estado = request.data.get('estado')
+        oferta.estado = nuevo_estado
+        oferta.save()
+        return Response({'status': 'estado actualizado', 'nuevo_estado': nuevo_estado})
+
+# Vista para obtener estadísticas de la empresa
+class EmpresaStatsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, user_id):
+        try:
+            # Obtener la empresa del usuario
+            empresa = Empresa.objects.get(usuario_id=user_id)
+            
+            # Obtener ofertas de la empresa usando empresa_id
+            ofertas = Oferta.objects.filter(empresa_id=empresa.id)
+            
+            # Contar ofertas activas
+            ofertas_activas = ofertas.filter(estado='Abierta').count()
+            
+            # Contar total de postulaciones a las ofertas de esta empresa
+            total_postulaciones = Postulacion.objects.filter(oferta__in=ofertas).count()
+            
+            # Contar contrataciones realizadas por esta empresa
+            contrataciones = Contratacion.objects.filter(
+                postulacion__oferta__in=ofertas
+            ).count()
+            
+            # Calcular vistas (por ahora usaremos un cálculo basado en postulaciones)
+            vistas_estimadas = total_postulaciones * 5  # Estimación: 5 vistas por postulación
+            
+            return Response({
+                'ofertas_activas': ofertas_activas,
+                'total_postulaciones': total_postulaciones,
+                'contrataciones': contrataciones,
+                'vistas_estimadas': vistas_estimadas,
+                'total_ofertas': ofertas.count()
+            })
+            
+        except Empresa.DoesNotExist:
+            return Response({'error': 'Empresa no encontrada'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+# ===================================================================
+# Vistas para el modelo CandidatoProfile
+# ===================================================================
+
+class CandidatoProfileView(APIView):
+    """
+    Vista para crear y obtener el perfil del candidato.
+    - GET /api/candidato-profile/<user_id>/: Obtiene el perfil del candidato.
+    - POST /api/candidato-profile/: Crea o actualiza el perfil del candidato.
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, user_id):
+        try:
+            candidato_profile = CandidatoProfile.objects.get(usuario_id=user_id)
+            serializer = CandidatoProfileSerializer(candidato_profile)
+            return Response(serializer.data)
+        except CandidatoProfile.DoesNotExist:
+            return Response({'error': 'Perfil de candidato no encontrado'}, status=404)
+    
+    def post(self, request):
+        try:
+            user_id = request.data.get('usuario_id')
+            if not user_id:
+                return Response({'error': 'usuario_id es requerido'}, status=400)
+            
+            # Verificar si ya existe un perfil para este usuario
+            try:
+                candidato_profile = CandidatoProfile.objects.get(usuario_id=user_id)
+                # Si existe, actualizar
+                serializer = CandidatoProfileSerializer(candidato_profile, data=request.data, partial=True)
+            except CandidatoProfile.DoesNotExist:
+                # Si no existe, crear nuevo
+                data = request.data.copy()
+                data['usuario'] = user_id
+                serializer = CandidatoProfileSerializer(data=data)
+            
+            if serializer.is_valid():
+                candidato_profile = serializer.save()
+                return Response(CandidatoProfileSerializer(candidato_profile).data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)

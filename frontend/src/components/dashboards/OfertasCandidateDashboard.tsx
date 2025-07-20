@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Briefcase, MapPin, DollarSign, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Briefcase, MapPin, DollarSign, Eye, Calendar, Building, FileText } from 'lucide-react';
 import Layout from '@/components/Layout';
 import axios from 'axios';
 import { endpoints } from '@/constants/endpoints';
@@ -26,24 +27,50 @@ interface OfertaEmpresa {
 const OfertasCandidateDashboard: React.FC = () => {
   const [ofertas, setOfertas] = useState<OfertaEmpresa[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOferta, setSelectedOferta] = useState<OfertaEmpresa | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [myApplications, setMyApplications] = useState<any[]>([]);
   const { user } = useAuth();
   
   useEffect(() => {
-    // Aquí se hace la petición para obtener las ofertas creadas por empresas
-    const fetchOfertas = async () => {
+    // Función para obtener las ofertas y las postulaciones del usuario
+    const fetchData = async () => {
+      if (!user) return;
+      
       setLoading(true);
       try {
-        const res = await axios.get(endpoints.base + endpoints.ofertasTodas);
-        console.log(res.data); // <-- Agrega esto para depurar
-        setOfertas(res.data);
+        // Obtener todas las ofertas
+        const ofertasRes = await axios.get(endpoints.base + endpoints.ofertasTodas);
+        
+        // Obtener las postulaciones del usuario actual
+        const postulacionesRes = await axios.get(endpoints.base + `api/usuarios/${user.id}/postulaciones/`);
+        
+        const todasOfertas = ofertasRes.data || [];
+        const misPostulaciones = postulacionesRes.data || [];
+        
+        // Obtener IDs de ofertas a las que ya se postuló
+        const ofertasPostuladas = misPostulaciones.map((postulacion: any) => postulacion.oferta?.id).filter(Boolean);
+        
+        // Filtrar ofertas: mostrar solo las que NO están en las postulaciones del usuario
+        const ofertasDisponibles = todasOfertas.filter((oferta: OfertaEmpresa) => 
+          !ofertasPostuladas.includes(oferta.id)
+        );
+        
+        setOfertas(ofertasDisponibles);
+        setMyApplications(misPostulaciones);
+        
+        console.log('Ofertas disponibles (sin postular):', ofertasDisponibles);
+        console.log('Mis postulaciones:', misPostulaciones);
       } catch (error) {
+        console.error('Error al obtener datos:', error);
         setOfertas([]);
+        setMyApplications([]);
       }
       setLoading(false);
     };
 
-    fetchOfertas();
-  }, []);
+    fetchData();
+  }, [user]);
 
   const handlePostularme = async (ofertaId: number) => {
     const email = user.email
@@ -54,8 +81,60 @@ const OfertasCandidateDashboard: React.FC = () => {
         { oferta_id: ofertaId, email }
       );
       alert('¡Te has postulado exitosamente!');
+      
+      // Refrescar la lista de ofertas para ocultar la oferta a la que se acaba de postular
+      if (user) {
+        try {
+          // Obtener todas las ofertas
+          const ofertasRes = await axios.get(endpoints.base + endpoints.ofertasTodas);
+          
+          // Obtener las postulaciones actualizadas del usuario
+          const postulacionesRes = await axios.get(endpoints.base + `api/usuarios/${user.id}/postulaciones/`);
+          
+          const todasOfertas = ofertasRes.data || [];
+          const misPostulaciones = postulacionesRes.data || [];
+          
+          // Obtener IDs de ofertas a las que ya se postuló
+          const ofertasPostuladas = misPostulaciones.map((postulacion: any) => postulacion.oferta?.id).filter(Boolean);
+          
+          // Filtrar ofertas: mostrar solo las que NO están en las postulaciones del usuario
+          const ofertasDisponibles = todasOfertas.filter((oferta: OfertaEmpresa) => 
+            !ofertasPostuladas.includes(oferta.id)
+          );
+          
+          setOfertas(ofertasDisponibles);
+          setMyApplications(misPostulaciones);
+        } catch (refreshError) {
+          console.error('Error al refrescar ofertas:', refreshError);
+        }
+      }
     } catch (error: any) {
       alert(error.response?.data?.error || 'Error al postularte');
+    }
+  };
+
+  const handleVerDetalle = (oferta: OfertaEmpresa) => {
+    setSelectedOferta(oferta);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedOferta(null);
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}`;
+    } catch (error) {
+      return dateString; // Return original if formatting fails
     }
   };
 
@@ -108,7 +187,7 @@ const OfertasCandidateDashboard: React.FC = () => {
                         )}
                         {oferta.fecha_publicacion && (
                           <span>
-                            Publicada: {oferta.fecha_publicacion}
+                            Publicada: {formatDate(oferta.fecha_publicacion)}
                           </span>
                         )}
                         <Badge className={oferta.activa ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'}>
@@ -118,7 +197,7 @@ const OfertasCandidateDashboard: React.FC = () => {
                       <p className="mt-2 text-xs">{oferta.descripcion}</p>
                     </div>
                     <div className="mt-4 md:mt-0 md:ml-4 flex flex-col items-end">
-                      <Button size="sm" className="mb-2">
+                      <Button size="sm" className="mb-2" onClick={() => handleVerDetalle(oferta)}>
                         <Eye className="w-4 h-4 mr-1" />
                         Ver Detalle
                       </Button>
@@ -137,6 +216,99 @@ const OfertasCandidateDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal para mostrar detalles de la oferta */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Briefcase className="w-5 h-5 text-primary" />
+              <span>{selectedOferta?.cargo}</span>
+            </DialogTitle>
+            <DialogDescription>
+              {selectedOferta?.empresa_nombre || 'Empresa'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedOferta && (
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Salario:</span>
+                    <span className="text-sm">${selectedOferta.salario}</span>
+                  </div>
+                  
+                  {selectedOferta.ubicacion && (
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Ubicación:</span>
+                      <span className="text-sm">{selectedOferta.ubicacion}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-2">
+                    <Building className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Profesión:</span>
+                    <span className="text-sm">{selectedOferta.profesion}</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  {selectedOferta.fecha_publicacion && (
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Publicada:</span>
+                      <span className="text-sm">{formatDate(selectedOferta.fecha_publicacion)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium">Estado:</span>
+                    <Badge className={selectedOferta.activa ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'}>
+                      {selectedOferta.activa ? 'Activa' : 'Inactiva'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Descripción */}
+              <div>
+                <div className="flex items-center space-x-2 mb-3">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Descripción del puesto:</span>
+                </div>
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {selectedOferta.descripcion || 'No hay descripción disponible.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="flex space-x-2">
+            <DialogClose asChild>
+              <Button variant="outline" onClick={closeModal}>
+                Cerrar
+              </Button>
+            </DialogClose>
+            {selectedOferta && (
+              <Button 
+                onClick={() => {
+                  handlePostularme(selectedOferta.id);
+                  closeModal();
+                }}
+                className="bg-primary text-primary-foreground hover:bg-primary-hover"
+              >
+                Postularme
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

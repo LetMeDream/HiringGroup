@@ -13,6 +13,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import OfertasCandidateDashboard from "@/components/dashboards/OfertasCandidateDashboard";
 import ContratacionesOnHiringDashboard from "@/components/dashboards/ContratacionesOnHiringDashboard";
+import MisAplicacionesDashboard from "@/components/dashboards/MisAplicacionesDashboard";
+import EditProfileDashboard from "@/components/dashboards/EditProfileDashboard";
+import CandidateProfilePage from "@/pages/CandidateProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +60,30 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ContratacionesOnHiringDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/registro-perfil"
+        element={
+          <ProtectedRoute>
+            <CandidateProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mis-aplicaciones"
+        element={
+          <ProtectedRoute>
+            <MisAplicacionesDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/editar-perfil"
+        element={
+          <ProtectedRoute>
+            <EditProfileDashboard />
           </ProtectedRoute>
         }
       />

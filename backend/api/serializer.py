@@ -5,6 +5,7 @@ from .models import (
     Usuario, 
     CandidatoProfile, 
     ExperienciaLaboral,
+    InformacionPersonal,
     Empresa,
     Oferta,
     Postulacion,
@@ -14,6 +15,15 @@ from .models import (
 # ===================================================================
 # Serializers para Perfiles y Datos Anidados
 # ===================================================================
+
+class InformacionPersonalSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo InformacionPersonal.
+    Se usará para manejar múltiples entradas de información personal.
+    """
+    class Meta:
+        model = InformacionPersonal
+        fields = ['id', 'profesion', 'universidad', 'pais', 'fecha_creacion']
 
 class ExperienciaLaboralSerializer(serializers.ModelSerializer):
     """
@@ -30,11 +40,46 @@ class CandidatoProfileSerializer(serializers.ModelSerializer):
     Serializer para el perfil del candidato.
     Incluye las experiencias laborales de forma anidada.
     """
-    experiencias = ExperienciaLaboralSerializer(many=True, read_only=True)
+    experiencias = ExperienciaLaboralSerializer(many=True, required=False)
+    usuario_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = CandidatoProfile
-        fields = ['id', 'profesion', 'universidad', 'experiencias']
+        fields = ['id', 'usuario_id', 'profesion', 'universidad', 'pais', 'experiencias']
+    
+    def create(self, validated_data):
+        experiencias_data = validated_data.pop('experiencias', [])
+        usuario_id = validated_data.pop('usuario_id')
+        
+        # Get the Usuario instance
+        try:
+            usuario = Usuario.objects.get(id=usuario_id)
+        except Usuario.DoesNotExist:
+            raise serializers.ValidationError(f"Usuario with id {usuario_id} does not exist")
+        
+        # Create the CandidatoProfile with the usuario
+        candidato_profile = CandidatoProfile.objects.create(usuario=usuario, **validated_data)
+        
+        for experiencia_data in experiencias_data:
+            ExperienciaLaboral.objects.create(candidato_profile=candidato_profile, **experiencia_data)
+        
+        return candidato_profile
+    
+    def update(self, instance, validated_data):
+        experiencias_data = validated_data.pop('experiencias', [])
+        
+        # Update profile fields
+        instance.profesion = validated_data.get('profesion', instance.profesion)
+        instance.universidad = validated_data.get('universidad', instance.universidad)
+        instance.pais = validated_data.get('pais', instance.pais)
+        instance.save()
+        
+        # Add new experiences without deleting existing ones
+        # This allows candidates to accumulate multiple work experiences over time
+        for experiencia_data in experiencias_data:
+            ExperienciaLaboral.objects.create(candidato_profile=instance, **experiencia_data)
+        
+        return instance
 
 # ===================================================================
 # Serializers para Usuarios y Autenticación
@@ -119,6 +164,9 @@ class OfertaSerializer(serializers.ModelSerializer):
 class PostulacionSerializer(serializers.ModelSerializer):
     postulante_nombre = serializers.CharField(source='postulante.nombre', read_only=True)
     postulante_email = serializers.CharField(source='postulante.email', read_only=True)
+    
+    # Incluir información completa de la oferta
+    oferta = OfertaSerializer(read_only=True)
 
     class Meta:
         model = Postulacion
@@ -128,6 +176,7 @@ class PostulacionSerializer(serializers.ModelSerializer):
             'postulante_email',
             'estado',
             'fecha_postulacion',
+            'oferta',  # Incluir toda la información de la oferta
         ]
 
 # ===================================================================

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,67 +16,81 @@ import {
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
+import { endpoints } from '@/constants/endpoints';
 
 const CandidateDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Estado para las postulaciones reales
+  const [myApplications, setMyApplications] = useState<any[]>([]);
+  const [applicationsLoading, setApplicationsLoading] = useState<boolean>(true);
 
-  const stats = [
-    {
-      title: 'Aplicaciones Enviadas',
-      value: '23',
-      icon: FileText,
-      change: '+5',
-      description: 'Total de postulaciones'
-    },
-    {
-      title: 'Ofertas Disponibles',
-      value: '342',
-      icon: Briefcase,
-      change: '+12',
-      description: 'Nuevas ofertas esta semana'
-    },
-    {
-      title: 'Perfil Completado',
-      value: '85%',
-      icon: User,
-      change: '+10%',
-      description: 'Progreso del curriculum'
-    },
-    {
-      title: 'Respuestas Pendientes',
-      value: '8',
-      icon: Clock,
-      change: '-2',
-      description: 'Aplicaciones en revisión'
-    }
-  ];
+  // Calcular estadísticas reales basadas en las postulaciones
+  const calculateStats = () => {
+    const totalApplications = myApplications.length;
+    const pendingApplications = myApplications.filter(app => app.estado === 'pendiente').length;
+    const reviewedApplications = myApplications.filter(app => app.estado === 'revisado').length;
+    const hiredApplications = myApplications.filter(app => app.estado === 'contratado').length;
+    
+    return [
+      {
+        title: 'Aplicaciones Enviadas',
+        value: applicationsLoading ? '...' : totalApplications.toString(),
+        icon: FileText,
+        change: '+' + Math.max(0, Math.floor(totalApplications * 0.2)),
+        description: 'Total de postulaciones'
+      },
+      {
+        title: 'En Revisión',
+        value: applicationsLoading ? '...' : reviewedApplications.toString(),
+        icon: Briefcase,
+        change: '+' + Math.max(0, Math.floor(reviewedApplications * 0.5)),
+        description: 'Aplicaciones siendo evaluadas'
+      },
+      {
+        title: 'Contrataciones',
+        value: applicationsLoading ? '...' : hiredApplications.toString(),
+        icon: User,
+        change: '+' + hiredApplications,
+        description: 'Ofertas exitosas'
+      },
+      {
+        title: 'Respuestas Pendientes',
+        value: applicationsLoading ? '...' : pendingApplications.toString(),
+        icon: Clock,
+        change: pendingApplications > 0 ? '+' + pendingApplications : '0',
+        description: 'Aplicaciones en espera'
+      }
+    ];
+  };
 
-  const myApplications = [
-    { 
-      company: 'TechCorp SA',
-      position: 'Desarrollador Frontend',
-      salary: '$42,000',
-      appliedDate: '2023-12-15',
-      status: 'pending',
-      location: 'Caracas'
-    },
-    { 
-      company: 'InnovateLabs',
-      position: 'Diseñador UX',
-      salary: '$38,000',
-      appliedDate: '2023-12-12',
-      status: 'reviewed',
-      location: 'Valencia'
-    },
-    { 
-      company: 'StartupXYZ',
-      position: 'Full Stack Developer',
-      salary: '$45,000',
-      appliedDate: '2023-12-10',
-      status: 'rejected',
-      location: 'Maracaibo'
+  const stats = calculateStats();
+
+  // Función para obtener las postulaciones reales del candidato
+  const fetchMyApplications = async (): Promise<void> => {
+    if (!user) return;
+    
+    setApplicationsLoading(true);
+    try {
+      const response = await axios.get(endpoints.base + `api/usuarios/${user.id}/postulaciones/`);
+      setMyApplications(response.data || []);
+    } catch (error) {
+      console.error('Error al obtener postulaciones:', error);
+      // Mantener array vacío en caso de error
+      setMyApplications([]);
     }
-  ];
+    setApplicationsLoading(false);
+  };
+
+  // useEffect para cargar las postulaciones al montar el componente
+  useEffect(() => {
+    if (user) {
+      fetchMyApplications();
+    }
+  }, [user]);
 
   const recommendedJobs = [
     {
@@ -99,17 +113,28 @@ const CandidateDashboard: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
+      case 'pendiente':
         return <Badge className="bg-warning text-warning-foreground">Pendiente</Badge>;
-      case 'reviewed':
+      case 'revisado':
         return <Badge className="bg-primary text-primary-foreground">En Revisión</Badge>;
-      case 'rejected':
+      case 'rechazado':
         return <Badge className="bg-destructive text-destructive-foreground">Rechazada</Badge>;
-      case 'accepted':
-        return <Badge className="bg-success text-success-foreground">Aceptada</Badge>;
+      case 'contratado':
+        return <Badge className="bg-success text-success-foreground">Contratado</Badge>;
       default:
-        return <Badge className="bg-muted text-muted-foreground">Desconocido</Badge>;
+        return <Badge className="bg-muted text-muted-foreground">{status || 'Pendiente'}</Badge>;
     }
+  };
+
+  // Función para formatear fecha
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'Fecha no disponible';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
   };
 
   return (
@@ -124,10 +149,6 @@ const CandidateDashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" className="flex items-center space-x-2">
-              <User className="w-4 h-4" />
-              <span>Editar Perfil</span>
-            </Button>
             <Button
               className="flex items-center space-x-2 bg-gradient-primary"
               onClick={() => navigate('/ofertas')}
@@ -184,40 +205,52 @@ const CandidateDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {myApplications.map((app, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{app.position}</h3>
-                        <p className="text-sm text-muted-foreground">{app.company}</p>
-                        <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center">
-                            <DollarSign className="w-3 h-3 mr-1" />
-                            {app.salary}
-                          </span>
-                          <span className="flex items-center">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            {app.location}
-                          </span>
-                          <span className="flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {app.appliedDate}
-                          </span>
+                {applicationsLoading ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Cargando postulaciones...</p>
+                  </div>
+                ) : myApplications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No tienes postulaciones aún</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => navigate('/ofertas')}
+                    >
+                      Buscar Ofertas
+                    </Button>
+                  </div>
+                ) : (
+                  myApplications.map((app, index) => (
+                    <div key={index} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-foreground">{app.oferta?.cargo || 'Cargo no especificado'}</h3>
+                          <p className="text-sm text-muted-foreground">{app.oferta?.empresa_nombre || 'Empresa no especificada'}</p>
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                            <span className="flex items-center">
+                              <DollarSign className="w-3 h-3 mr-1" />
+                              ${app.oferta?.salario || 'No especificado'}
+                            </span>
+                            <span className="flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {app.oferta?.ubicacion || 'Ubicación no especificada'}
+                            </span>
+                            <span className="flex items-center">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {formatDate(app.fecha_postulacion)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          {getStatusBadge(app.estado)}
                         </div>
                       </div>
-                      <div className="ml-4">
-                        {getStatusBadge(app.status)}
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
-              
-              <div className="mt-6 text-center">
-                <Button variant="outline">
-                  Ver Todas las Aplicaciones
-                </Button>
-              </div>
+
             </CardContent>
           </Card>
 
@@ -233,59 +266,22 @@ const CandidateDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="h-16 flex-col">
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => navigate('/ofertas')}>
                     <Search className="w-5 h-5 mb-1" />
                     <span className="text-xs">Buscar Ofertas</span>
                   </Button>
-                  <Button variant="outline" className="h-16 flex-col">
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => navigate('/editar-perfil')}>
                     <User className="w-5 h-5 mb-1" />
                     <span className="text-xs">Editar CV</span>
                   </Button>
-                  <Button variant="outline" className="h-16 flex-col">
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => navigate('/mis-aplicaciones')}>
                     <FileText className="w-5 h-5 mb-1" />
                     <span className="text-xs">Mis Aplicaciones</span>
                   </Button>
-                  <Button variant="outline" className="h-16 flex-col">
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => navigate('/registro-perfil')}>
                     <AlertCircle className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Alertas</span>
+                    <span className="text-xs">Registro de Datos Importantes</span>
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recommended Jobs */}
-            <Card className="shadow-card border-0">
-              <CardHeader>
-                <CardTitle>Ofertas Recomendadas</CardTitle>
-                <CardDescription>
-                  Basadas en tu perfil y experiencia
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recommendedJobs.map((job, index) => (
-                    <div key={index} className="p-3 border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-foreground">{job.position}</h4>
-                          <p className="text-sm text-muted-foreground">{job.company}</p>
-                          <div className="flex items-center space-x-3 mt-1 text-xs text-muted-foreground">
-                            <span>{job.salary}</span>
-                            <span>{job.location}</span>
-                            <span>Hace {job.posted}</span>
-                          </div>
-                        </div>
-                        <div className="ml-2 text-right">
-                          <Badge className="bg-success text-success-foreground mb-2">
-                            {job.match}
-                          </Badge>
-                          <Button size="sm" className="block">
-                            Aplicar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </Card>
