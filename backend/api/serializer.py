@@ -119,6 +119,9 @@ class OfertaSerializer(serializers.ModelSerializer):
 class PostulacionSerializer(serializers.ModelSerializer):
     postulante_nombre = serializers.CharField(source='postulante.nombre', read_only=True)
     postulante_email = serializers.CharField(source='postulante.email', read_only=True)
+    
+    # Incluir información completa de la oferta
+    oferta = OfertaSerializer(read_only=True)
 
     class Meta:
         model = Postulacion
@@ -128,6 +131,7 @@ class PostulacionSerializer(serializers.ModelSerializer):
             'postulante_email',
             'estado',
             'fecha_postulacion',
+            'oferta',  # Incluir toda la información de la oferta
         ]
 
 # ===================================================================
