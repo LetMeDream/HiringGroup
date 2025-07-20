@@ -379,3 +379,59 @@ class UsuarioContratacionStatusView(APIView):
                 'direccion': empresa.direccion,
             }
         })
+
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from django.db.models import Count
+
+class OfertaViewSet(viewsets.ModelViewSet):
+    queryset = Oferta.objects.all()
+    serializer_class = OfertaSerializer
+    permission_classes = [AllowAny]
+    
+    @action(detail=True, methods=['post'])
+    def toggle_estado(self, request, pk=None):
+        oferta = self.get_object()
+        nuevo_estado = request.data.get('estado')
+        oferta.estado = nuevo_estado
+        oferta.save()
+        return Response({'status': 'estado actualizado', 'nuevo_estado': nuevo_estado})
+
+# Vista para obtener estadísticas de la empresa
+class EmpresaStatsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, user_id):
+        try:
+            # Obtener la empresa del usuario
+            empresa = Empresa.objects.get(usuario_id=user_id)
+            
+            # Obtener ofertas de la empresa usando empresa_id
+            ofertas = Oferta.objects.filter(empresa_id=empresa.id)
+            
+            # Contar ofertas activas
+            ofertas_activas = ofertas.filter(estado='Abierta').count()
+            
+            # Contar total de postulaciones a las ofertas de esta empresa
+            total_postulaciones = Postulacion.objects.filter(oferta__in=ofertas).count()
+            
+            # Contar contrataciones realizadas por esta empresa
+            contrataciones = Contratacion.objects.filter(
+                postulacion__oferta__in=ofertas
+            ).count()
+            
+            # Calcular vistas (por ahora usaremos un cálculo basado en postulaciones)
+            vistas_estimadas = total_postulaciones * 5  # Estimación: 5 vistas por postulación
+            
+            return Response({
+                'ofertas_activas': ofertas_activas,
+                'total_postulaciones': total_postulaciones,
+                'contrataciones': contrataciones,
+                'vistas_estimadas': vistas_estimadas,
+                'total_ofertas': ofertas.count()
+            })
+            
+        except Empresa.DoesNotExist:
+            return Response({'error': 'Empresa no encontrada'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)

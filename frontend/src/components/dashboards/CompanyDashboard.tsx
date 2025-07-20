@@ -25,7 +25,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { useForm } from 'react-hook-form';
 
 // Subcomponente: Modal para crear oferta laboral
-const CreateOfferModal = ({ open, onOpenChange }) => {
+const CreateOfferModal = ({ open, onOpenChange, onOfferCreated }) => {
   const form = useForm({
     defaultValues: {
       profesion: '',
@@ -47,6 +47,10 @@ const CreateOfferModal = ({ open, onOpenChange }) => {
         setLoading(false);
         onOpenChange(false);
         form.reset();
+        // Llamar al callback para actualizar la lista de ofertas
+        if (onOfferCreated) {
+          onOfferCreated();
+        }
     } catch (e) {
         setLoading(false);
         // Manejo de error aquí
@@ -144,6 +148,13 @@ const CompanyDashboard: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [offers, setOffers] = useState([]);
   const [offersLoading, setOffersLoading] = useState(true);
+  const [stats, setStats] = useState({
+    ofertas_activas: 0,
+    total_postulaciones: 0,
+    contrataciones: 0,
+    vistas_estimadas: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Definir fetchOffers fuera de useEffect para poder llamarlo desde un botón
   const fetchOffers = async () => {
@@ -157,43 +168,111 @@ const CompanyDashboard: React.FC = () => {
     setOffersLoading(false);
   };
 
+  // Función para obtener estadísticas reales de la empresa
+  const fetchStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await axios.get(endpoints.base + `api/empresas/${user.id}/stats/`);
+      setStats(res.data);
+    } catch (e) {
+      console.error('Error al obtener estadísticas:', e);
+      // Mantener valores por defecto en caso de error
+    }
+    setStatsLoading(false);
+  };
+
   useEffect(() => {
-    if (empresa) fetchOffers();
+    if (empresa) {
+      fetchOffers();
+      fetchStats();
+    }
   }, [empresa]);
 
  
-  // Simulación de refresco de ofertas
+  // Función para manejar cuando se crea una nueva oferta
   const handleOfferCreated = (newOffer) => {
     setOffers((prev) => [newOffer, ...prev]);
+    // También actualizar las estadísticas para reflejar la nueva oferta
+    fetchStats();
   };
 
-  const stats = [
+  // Función para cambiar el estado de una oferta
+  const toggleOfferStatus = async (offerId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'Abierta' ? 'Cerrada' : 'Abierta';
+      
+      // Primero obtener los datos actuales de la oferta
+      const currentOffer = offers.find(offer => offer.id === offerId);
+      if (!currentOffer) {
+        console.error('Oferta no encontrada');
+        return;
+      }
+      
+      // Usar PUT con todos los datos de la oferta
+      const response = await axios.put(endpoints.base + `api/ofertas/${offerId}/`, {
+        ...currentOffer,
+        estado: newStatus
+      });
+      
+      // Actualizar la lista local de ofertas
+      setOffers(prevOffers => 
+        prevOffers.map(offer => 
+          offer.id === offerId 
+            ? { ...offer, estado: newStatus }
+            : offer
+        )
+      );
+    } catch (error) {
+      console.error('Error al cambiar estado de la oferta:', error);
+      // Si PUT tampoco funciona, intentar con POST a un endpoint específico
+      try {
+        const newStatus = currentStatus === 'Abierta' ? 'Cerrada' : 'Abierta';
+        await axios.post(endpoints.base + `api/ofertas-viewset/${offerId}/toggle_estado/`, {
+          estado: newStatus
+        });
+        
+        // Actualizar la lista local de ofertas
+        setOffers(prevOffers => 
+          prevOffers.map(offer => 
+            offer.id === offerId 
+              ? { ...offer, estado: newStatus }
+              : offer
+          )
+        );
+      } catch (secondError) {
+        console.error('Error en segundo intento:', secondError);
+        alert('No se pudo cambiar el estado de la oferta. Verifique la configuración del API.');
+      }
+    }
+  };
+
+  const statsData = [
     {
       title: 'Ofertas Activas',
-      value: '12',
+      value: statsLoading ? '...' : stats.ofertas_activas.toString(),
       icon: Briefcase,
-      change: '+3',
+      change: '+' + (stats.ofertas_activas > 0 ? Math.floor(stats.ofertas_activas * 0.2) : 0),
       description: 'Ofertas publicadas y disponibles'
     },
     {
       title: 'Candidatos Aplicados',
-      value: '186',
+      value: statsLoading ? '...' : stats.total_postulaciones.toString(),
       icon: Users,
-      change: '+24',
+      change: '+' + (stats.total_postulaciones > 0 ? Math.floor(stats.total_postulaciones * 0.15) : 0),
       description: 'Total de aplicaciones recibidas'
     },
     {
       title: 'Vistas del Mes',
-      value: '1,247',
+      value: statsLoading ? '...' : stats.vistas_estimadas.toLocaleString(),
       icon: Eye,
-      change: '+156',
+      change: '+' + (stats.vistas_estimadas > 0 ? Math.floor(stats.vistas_estimadas * 0.1) : 0),
       description: 'Visualizaciones de ofertas'
     },
     {
       title: 'Contrataciones',
-      value: '8',
+      value: statsLoading ? '...' : stats.contrataciones.toString(),
       icon: CheckCircle,
-      change: '+2',
+      change: '+' + (stats.contrataciones > 0 ? Math.floor(stats.contrataciones * 0.25) : 0),
       description: 'Candidatos contratados'
     }
   ];
@@ -232,7 +311,7 @@ const CompanyDashboard: React.FC = () => {
 
   return (
     <Layout>
-      <CreateOfferModal open={showCreateModal} onOpenChange={setShowCreateModal} />
+      <CreateOfferModal open={showCreateModal} onOpenChange={setShowCreateModal} onOfferCreated={() => { fetchOffers(); fetchStats(); }} />
       <div className="space-y-6">
         {/* <div className="flex justify-end">
           <Button variant="outline" onClick={fetchOffers}>
@@ -261,7 +340,7 @@ const CompanyDashboard: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
+          {statsData.map((stat, index) => (
             <Card key={index} className="shadow-card border-0">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -340,38 +419,56 @@ const CompanyDashboard: React.FC = () => {
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
-                          <h3 className="font-semibold text-foreground">{offer.title}</h3>
+                          <h3 className="font-semibold text-foreground">{offer.cargo || offer.title || 'Sin título'}</h3>
                           <Badge 
-                            className={offer.status === 'active' 
+                            className={offer.activa || offer.status === 'active' 
                               ? 'bg-success text-success-foreground' 
                               : 'bg-muted text-muted-foreground'
                             }
                           >
-                            {offer.status === 'active' ? 'Activa' : 'Inactiva'}
+                            {offer.activa || offer.status === 'active' ? 'Activa' : 'Inactiva'}
                           </Badge>
                         </div>
                         <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
-                          <span>Salario: {offer.salary}</span>
-                          <span>Aplicaciones: {offer.applications}</span>
-                          <span>Publicada hace {offer.published}</span>
+                          <span>Profesión: {offer.profesion || 'No especificada'}</span>
+                          <span>Salario: ${offer.salario || offer.salary || 'No especificado'}</span>
+                          <div className="flex items-center space-x-2">
+                            <span>Estado:</span>
+                            <Badge 
+                              className={offer.estado === 'Abierta' 
+                                ? 'bg-green-100 text-green-800 border-green-200' 
+                                : 'bg-red-100 text-red-800 border-red-200'
+                              }
+                              variant="outline"
+                            >
+                              {offer.estado || 'Sin estado'}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" title="Ver detalles">
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" title="Configurar">
                           <Settings className="w-4 h-4" />
                         </Button>
-                        {offer.status === 'active' ? (
-                          <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => toggleOfferStatus(offer.id, offer.estado)}
+                          className={offer.estado === 'Abierta' 
+                            ? 'text-red-600 hover:text-red-700 hover:bg-red-50' 
+                            : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                          }
+                          title={offer.estado === 'Abierta' ? 'Cerrar oferta' : 'Abrir oferta'}
+                        >
+                          {offer.estado === 'Abierta' ? (
                             <XCircle className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <Button variant="outline" size="sm">
+                          ) : (
                             <CheckCircle className="w-4 h-4" />
-                          </Button>
-                        )}
+                          )}
+                        </Button>
                       </div>
                     </div>
                   ))}

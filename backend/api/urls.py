@@ -1,10 +1,18 @@
 # En api/urls.py
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import UsuarioListCreateView, UsuarioDetailView, UsuarioLoginView, EmpresaListCreateView, actualizar_datos_empresa
 from .views import OfertaListCreateView, OfertaListView, PostulacionCreateView, OfertaPostulacionesListView
-from .views import PostulacionContratarView, PostulacionRechazarView, ContratacionCreateView, UsuarioPostulacionesView, UsuarioContratacionStatusView
+from .views import PostulacionContratarView, PostulacionRechazarView, ContratacionCreateView, UsuarioPostulacionesView, UsuarioContratacionStatusView, OfertaViewSet, EmpresaStatsView
+
+# Configurar el router para ViewSets
+router = DefaultRouter()
+router.register(r'ofertas-viewset', OfertaViewSet)
 
 urlpatterns = [
+    # Incluir rutas del router
+    path('', include(router.urls)),
+    
     # Rutas para el modelo Usuario
     path('usuarios/', UsuarioListCreateView.as_view(), name='usuario-list-create'),
     path('usuarios/<int:pk>/', UsuarioDetailView.as_view(), name='usuario-detail'),
@@ -30,4 +38,6 @@ urlpatterns = [
     # Contrataciones
     path('contrataciones/', ContratacionCreateView.as_view(), name='contratacion-create'),
     path('usuarios/<int:user_id>/contratacion-status/', UsuarioContratacionStatusView.as_view()),
+    # Estadísticas de empresa
+    path('empresas/<int:user_id>/stats/', EmpresaStatsView.as_view(), name='empresa-stats'),
 ]
