@@ -299,6 +299,10 @@ class PostulacionContratarView(APIView):
             oferta = postulacion.oferta
             usuario = postulacion.postulante
 
+            # Verificar si ya existe una contratación para esta postulación
+            if hasattr(postulacion, 'contratacion'):
+                return Response({'error': 'Este candidato ya ha sido contratado.'}, status=status.HTTP_400_BAD_REQUEST)
+
             # Cambiar estado de la postulación
             postulacion.estado = 'contratado'
             postulacion.save()
@@ -307,13 +311,29 @@ class PostulacionContratarView(APIView):
             usuario.role = 'CONTRATADO'
             usuario.save()
 
+            # Crear registro de contratación con valores por defecto
+            contratacion = Contratacion.objects.create(
+                postulacion=postulacion,
+                tiempo_contratacion="indefinido",  # Valor por defecto
+                salario_mensual=0.00,  # Valor por defecto, se puede actualizar después
+                tipo_sangre="",
+                contacto_emergencia="",
+                telefono_emergencia="",
+                numero_cuenta=""
+            )
+
             # Cambiar oferta a inactiva
             oferta.activa = False
             oferta.save()
 
-            return Response({'message': 'Candidato contratado y oferta cerrada.'}, status=status.HTTP_200_OK)
+            return Response({
+                'message': 'Candidato contratado y oferta cerrada.',
+                'contratacion_id': contratacion.id
+            }, status=status.HTTP_200_OK)
         except Postulacion.DoesNotExist:
             return Response({'error': 'Postulación no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error al crear contratación: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class PostulacionRechazarView(APIView):
     permission_classes = [AllowAny]

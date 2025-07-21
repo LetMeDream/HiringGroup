@@ -58,9 +58,11 @@ const ContratacionesOnHiringDashboard: React.FC = () => {
       const response = await axios.post(endpoints.base + `api/postulaciones/${postulacionId}/contratar/`);
       if (response.status === 200 && response.data) { 
         alert('Candidato contratado y oferta cerrada.');
-        // Refresca postulaciones y ofertas
-        setSelectedOferta(null);
-        // Opcional: puedes volver a cargar las ofertas aquí
+        // Refresca postulaciones para mostrar el cambio de estado
+        if (selectedOferta) {
+          await handleVerPostulaciones(selectedOferta);
+        }
+        // También refresca las ofertas
         fetchOfertas();
       }
     } catch (e) {
@@ -73,8 +75,10 @@ const ContratacionesOnHiringDashboard: React.FC = () => {
     try {
       await axios.post(endpoints.base + `api/postulaciones/${postulacionId}/rechazar/`);
       alert('Candidato rechazado.');
-      // Refresca postulaciones
-      if (selectedOferta) handleVerPostulaciones(selectedOferta);
+      // Refresca postulaciones para mostrar el cambio de estado
+      if (selectedOferta) {
+        await handleVerPostulaciones(selectedOferta);
+      }
     } catch (e) {
       alert('Error al rechazar');
     }
